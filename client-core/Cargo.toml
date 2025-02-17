@@ -1,0 +1,16 @@
+[package]
+name = "nillion_client_core"
+version = "0.2.1-rc1"
+edition = "2021"
+
+[lib]
+name = "nillion_client_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22.5", features = ["abi3", "abi3-py37", "num-bigint", "py-clone"] }
+
+nillion-client-core = { path = "../nilvm/libs/client-core" }
+
+[dev-dependencies]
+ctor = "0.2"

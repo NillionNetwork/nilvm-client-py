@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nillion-client"
+version = "0.2.1rc1"
+requires-python = ">=3.10"
+description = "Nillion client"
+license = { text = "MIT" }
+readme = "README.pypi.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "cosmpy==0.9.2",
+    "secp256k1==0.14.0",
+    "base58==2.1.1",
+    "tenacity==9.0.0",
+    "nillion-client-core==0.2.1rc1",
+    "nillion-client-proto==0.2.1rc1",
+    "pyyaml==6.0.2"
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest-asyncio==0.23.8",
+    "pytest==8.3.3",
+    "ruff==0.7.0",
+    "nillion-client-proto[dev]==0.1.0",
+    "nillion-client-core[dev]==0.1.0",
+    "pyright>=1.1",
+    "nada_dsl==0.8.0rc2",
+    "nada-mir-proto==0.2.0rc1",
+    "twine",
+    "ipython==8.20.0",
+    "myst-parser==2.0.0",
+    "nbsphinx==0.9.3",
+    "nbsphinx-link==1.3.0",
+    "Sphinx==7.1.2",
+    "sphinx-bootstrap-theme==0.8.1",
+    "sphinx-markdown-builder==0.6.6",
+    "sphinx-copybutton==0.5.2",
+    "sphinx-autodoc-typehints==2.0.1",
+    "tomli>=2.2.0",
+    "requests>=2.32.3",
+]
+
+[tool.uv.sources]
+nillion-client-core = { workspace = true }
+nillion-client-proto = { workspace = true }
+
+[tool.uv.workspace]
+members = ["client-core", "client-proto"]
+
+[tool.pyright]
+exclude = ["client-proto/", ".venv", "nilvm/", ".venv-rc-test"]
+
+[tool.ruff]
+exclude = [".venv", "nilvm/"]

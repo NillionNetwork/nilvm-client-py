@@ -1,0 +1,25 @@
+[build-system]
+requires = ["maturin==1.7.4"]
+build-backend = "maturin"
+
+[project]
+name = "nillion-client-core"
+version = "0.2.1rc1"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "maturin[zig]==1.7.4",
+    "pip==24.2"
+]
+
+[tool.uv]
+cache-keys = [{ file = "src/**" }, { file = "Cargo.toml" }, { file = "nillion_client_core.pyi" }]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]

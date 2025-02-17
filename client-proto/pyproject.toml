@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nillion-client-proto"
+version = "0.2.1rc1"
+description = "Nillion client Protobuf files"
+license = { text = "MIT" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "betterproto==2.0.0b7",
+    "googleapis-common-protos==1.66.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "grpcio-tools==1.62.3",
+    "betterproto[compiler]==2.0.0b7"
+]

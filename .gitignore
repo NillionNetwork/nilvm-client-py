@@ -1,0 +1,10 @@
+/.env
+target/
+*.egg-info
+*.pyc
+.idea
+*.log
+*.junit.xml
+dist/
+.intentionally-empty-file.o
+build/

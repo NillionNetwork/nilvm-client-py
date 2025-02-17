@@ -1,0 +1,222 @@
+name: CI
+on: [ push ]
+defaults:
+  run:
+    shell: bash
+env:
+  NILLION_REPO_PATH: ./nilvm
+
+jobs:
+  start-runner:
+    name: Start self-hosted EC2 runner
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start-ec2-runner.outputs.label }}
+      ec2-instances-ids: ${{ steps.start-ec2-runner.outputs.ec2-instances-ids }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-access-key-id: ${{ secrets.GH_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.GH_AWS_SECRET_KEY }}
+          aws-region: "eu-west-1"
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: NillionNetwork/ec2-github-runner@v2.2
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN_RUNNER }}
+          runners-per-machine: 1
+          number-of-machines: 1
+          ec2-image-id: ami-085ff9583e27b17b0
+          ec2-instance-type: c6in.2xlarge
+          subnet-id: subnet-0ec4c353621eabae2
+          security-group-id: sg-03ee5c56e1f467aa0
+          key-name: production-github-runner-key
+          iam-role-name: github-runners-production-github-runner-ec2
+          aws-resource-tags: >
+            [
+              {"Key": "Name", "Value": "github-runner-${{ github.run_id }}-${{ github.run_number }}"},
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
+              {"Key": "KeyName", "Value": "github-runners-key"},
+              {"Key": "Deployment", "Value": "github-runners"},
+              {"Key": "Type", "Value": "GithubRunner"},
+              {"Key": "User", "Value": "ec2-user"},
+              {"Key": "Environment", "Value": "production"}
+            ]
+  ci:
+    name: CI
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    needs: [ start-runner ]
+    container: public.ecr.aws/x8g8t2h7/python-client-builder:0.1.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      # TODO uv is installed in container but not found
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.24"
+
+      - name: Set up Python
+        run: uv python install
+
+      # TODO rustup is installed in container but not found
+      - name: Install rustup
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2024-07-01
+
+      - name: Install the project
+        run: uv sync --all-extras --dev --prerelease=allow
+
+      - name: Check format python
+        run: just python-format-check
+
+      - name: Check format rust
+        run: just rust-format-check
+
+      - name: Check Typing Python
+        run: just python-type-check
+
+      - name: Cargo Clippy
+        run: just clippy
+
+      - name: Client Core Tests
+        run: just test-client-core
+
+      - name: Get SDK Version
+        id: get-sdk-version
+        run: |
+          VERSION=$(cat .nil-sdk.toml | sed -e "s|.*\"\(.*\)\".*|\1|g")
+          echo "version=$VERSION" > $GITHUB_OUTPUT
+
+      - name: Install nillion SDK
+        uses: NillionNetwork/nillion-setup-action@main
+        with:
+          version: ${{ steps.get-sdk-version.outputs.version }}
+
+      - name: Client Tests
+        run: just test-client run-devnet
+
+      - name: Tests Report
+        uses: mikepenz/action-junit-report@v4.3.1
+        if: ${{ ! cancelled() }}
+        with:
+          report_paths: "./*.junit.xml"
+          check_name: "Tests Report"
+
+      - name: Package
+        run: just package
+
+      - name: Store nillion-client-core distribution packages
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: nillion-client-core-distributions
+          path: client-core/dist/*.whl
+
+      - name: Store nillion-client-proto distribution packages
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: nillion-client-proto-distributions
+          path: client-proto/dist/*.whl
+
+      - name: Store nillion-client distribution packages
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: nillion-client-distributions
+          path: dist/*.whl
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs: [ ci ]
+    if: github.ref == 'refs/heads/main'
+    strategy:
+        matrix:
+            pkg:
+            - name: nillion-client-core
+              pyproject-path: "./client-core/pyproject.toml"
+              package-name: "nillion_client_core"
+              token-secret-name: PYPI_NILLION_CLIENT_CORE_TOKEN
+            - name: nillion-client-proto
+              pyproject-path: "./client-proto/pyproject.toml"
+              package-name: "nillion_client_proto"
+              token-secret-name: PYPI_NILLION_CLIENT_PROTO_TOKEN
+            - name: nillion-client
+              pyproject-path: "./pyproject.toml"
+              package-name: "nillion-client"
+              token-secret-name: PYPI_NILLION_CLIENT_TOKEN
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.24"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Check version
+        id: versioncheck
+        run: >-
+          cd scripts/version_checker && uv run ./version_checker.py ../../${{ matrix.pkg.pyproject-path }}
+
+      - name: Download dists
+        if: steps.versioncheck.outputs.local_version_is_higher == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.pkg.name }}-distributions
+          path: dist/${{ matrix.pkg.name }}/
+
+      - name: Publish package distributions to PyPI
+        if: steps.versioncheck.outputs.local_version_is_higher == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets[matrix.pkg.token-secret-name] }}
+          packages-dir: dist/${{ matrix.pkg.name }}/
+
+      - name: Create GH Release
+        id: create_release
+        if: steps.versioncheck.outputs.local_version_is_higher == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [[ "${{ steps.versioncheck.outputs.local_version }}" == *"rc"* ]] && PRERELEASE="-p" || PRERELEASE=""
+          gh release create '${{ matrix.pkg.name }}-v${{ steps.versioncheck.outputs.local_version }}' --generate-notes $PRERELEASE --title "${{ matrix.pkg.name }}-v${{ steps.versioncheck.outputs.local_version }}"
+
+      - name: Upload artifact to GH Release
+        if: steps.versioncheck.outputs.local_version_is_higher == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh release upload '${{ matrix.pkg.name }}-v${{ steps.versioncheck.outputs.local_version }}' dist/${{ matrix.pkg.name }}/**
+
+  stop-runner:
+    name: Stop self-hosted EC2 runner
+    needs: [ start-runner, ci, publish ]
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.GH_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.GH_AWS_SECRET_KEY }}
+          aws-region: "eu-west-1"
+
+      - name: Stop EC2 runner
+        uses: NillionNetwork/ec2-github-runner@v2.2
+        with:
+          mode: stop
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN_RUNNER }}
+          label: ${{ needs.start-runner.outputs.label }}
+          ec2-instances-ids: ${{ needs.start-runner.outputs.ec2-instances-ids }}
+
+

@@ -82,12 +82,12 @@ impl EcdsaSignature {
         self.inner.to_string()
     }
 
-    /// Getter for the `r` inside a
+    /// Getter for the tuple `(r, s)` inside a
     /// :py:class:`EcdsaSignature` instance.
     ///
     /// Returns
     /// -------
-    /// int
+    /// tuple
     ///     The value of the private ecdsa key.
     ///
     /// Example

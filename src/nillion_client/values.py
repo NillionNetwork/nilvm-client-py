@@ -12,6 +12,10 @@ from nillion_client_proto.nillion.values.v1.value import (
     EcdsaPublicKey,
     EcdsaPrivateKeyShare,
     EcdsaSignatureShare,
+    EddsaMessage,
+    EddsaPrivateKeyShare,
+    EddsaPublicKey,
+    EddsaSignature,
     NamedValue,
     PublicInteger,
     ShamirShare,
@@ -103,6 +107,25 @@ def encrypted_nada_value_to_protobuf(value: EncryptedNadaValue) -> Value:
                     store_id=bytes(value.value),
                 )
             )
+        case EncryptedNadaValue.EddsaMessage():  # type: ignore
+            return Value(eddsa_message=EddsaMessage(message=bytes(value.value)))
+        case EncryptedNadaValue.EddsaSignature():  # type: ignore
+            return Value(eddsa_signature=EddsaSignature(signature=bytes(value.value)))
+        case EncryptedNadaValue.EddsaPrivateKey():  # type: ignore
+            return Value(
+                eddsa_private_key_share=EddsaPrivateKeyShare(
+                    i=value.i,
+                    x=bytes(value.x),
+                    shared_public_key=bytes(value.shared_public_key),
+                    public_shares=[bytes(s) for s in value.public_shares],
+                )
+            )
+        case EncryptedNadaValue.EddsaPublicKey():  # type: ignore
+            return Value(
+                eddsa_public_key=EddsaPublicKey(
+                    public_key=bytes(value.value),
+                )
+            )
         case _:
             raise Exception(f"unsupported type: {value}")
 
@@ -157,6 +180,23 @@ def encrypted_nada_value_from_protobuf(value: Value) -> EncryptedNadaValue:
             return EncryptedNadaValue.EcdsaPublicKey(
                 value=bytes(value.public_key),
             )
+        case Value(eddsa_message=value):
+            return EncryptedNadaValue.EddsaMessage(value=bytes(value.message))
+        case Value(eddsa_signature=value):
+            return EncryptedNadaValue.EddsaSignature(
+                value=bytes(value.signature),
+            )
+        case Value(eddsa_private_key_share=value):
+            return EncryptedNadaValue.EddsaPrivateKey(
+                i=value.i,
+                x=list(value.x),
+                shared_public_key=list(value.shared_public_key),
+                public_shares=[list(s) for s in value.public_shares],
+            )
+        case Value(eddsa_public_key=value):
+            return EncryptedNadaValue.EddsaPublicKey(
+                value=bytes(value.public_key),
+            )
         case Value(store_id=value):
             return EncryptedNadaValue.StoreId(
                 value=bytes(value.store_id),
@@ -203,6 +243,14 @@ def encrypted_nada_type_to_protobuf(nada_type: EncryptedNadaType) -> ValueType:
             return ValueType(ecdsa_public_key=Empty())
         case EncryptedNadaType.StoreId():  # type: ignore
             return ValueType(store_id=Empty())
+        case EncryptedNadaType.EddsaMessage():  # type: ignore
+            return ValueType(eddsa_message=Empty())
+        case EncryptedNadaType.EddsaSignature():  # type: ignore
+            return ValueType(eddsa_signature=Empty())
+        case EncryptedNadaType.EddsaPrivateKey():  # type: ignore
+            return ValueType(eddsa_private_key_share=Empty())
+        case EncryptedNadaType.EddsaPublicKey():  # type: ignore
+            return ValueType(eddsa_public_key=Empty())
         case _:
             raise Exception(f"unsupported encrypted type: {nada_type}")
 
@@ -241,5 +289,13 @@ def encrypted_nada_type_from_protobuf(nada_type: ValueType) -> EncryptedNadaType
             return EncryptedNadaType.EcdsaPublicKey()  # type: ignore
         case ValueType(store_id=_):
             return EncryptedNadaType.StoreId()  # type: ignore
+        case ValueType(eddsa_message=_):
+            return EncryptedNadaType.EddsaMessage()  # type: ignore
+        case ValueType(eddsa_signature=_):
+            return EncryptedNadaType.EddsaSignature()  # type: ignore
+        case ValueType(eddsa_private_key_share=_):
+            return EncryptedNadaType.EddsaPrivateKey()  # type: ignore
+        case ValueType(eddsa_public_key=_):
+            return EncryptedNadaType.EddsaPublicKey()  # type: ignore
         case _:
             raise Exception(f"unsupported type: {nada_type}")

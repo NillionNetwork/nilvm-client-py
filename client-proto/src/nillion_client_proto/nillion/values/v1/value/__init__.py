@@ -77,6 +77,20 @@ class Value(betterproto.Message):
     store_id: "StoreId" = betterproto.message_field(14, group="value")
     """A store id."""
 
+    eddsa_private_key_share: "EddsaPrivateKeyShare" = betterproto.message_field(
+        15, group="value"
+    )
+    """An Eddsa private key share."""
+
+    eddsa_signature: "EddsaSignature" = betterproto.message_field(16, group="value")
+    """An Eddsa signature."""
+
+    eddsa_message: "EddsaMessage" = betterproto.message_field(17, group="value")
+    """An Eddsa message."""
+
+    eddsa_public_key: "EddsaPublicKey" = betterproto.message_field(18, group="value")
+    """An Eddsa public key."""
+
 
 @dataclass(eq=False, repr=False)
 class PublicInteger(betterproto.Message):
@@ -161,7 +175,7 @@ class EcdsaPublicKey(betterproto.Message):
     """An ECDSA public key."""
 
     public_key: bytes = betterproto.bytes_field(1)
-    """The public key, in compressed form."""
+    """The public key."""
 
 
 @dataclass(eq=False, repr=False)
@@ -170,6 +184,47 @@ class StoreId(betterproto.Message):
 
     store_id: bytes = betterproto.bytes_field(1)
     """The store id."""
+
+
+@dataclass(eq=False, repr=False)
+class EddsaPrivateKeyShare(betterproto.Message):
+    """An Eddsa private key share."""
+
+    i: int = betterproto.uint32_field(1)
+    """Index of local party in key generation protocol."""
+
+    x: bytes = betterproto.bytes_field(2)
+    """The secret share x."""
+
+    shared_public_key: bytes = betterproto.bytes_field(3)
+    """Public key corresponding to shared secret key, in compressed form."""
+
+    public_shares: List[bytes] = betterproto.bytes_field(4)
+    """Public shares of all signers sharing the key, in compressed form."""
+
+
+@dataclass(eq=False, repr=False)
+class EddsaSignature(betterproto.Message):
+    """An Eddsa signature."""
+
+    signature: bytes = betterproto.bytes_field(1)
+    """The signature."""
+
+
+@dataclass(eq=False, repr=False)
+class EddsaMessage(betterproto.Message):
+    """An Eddsa message."""
+
+    message: bytes = betterproto.bytes_field(1)
+    """The message."""
+
+
+@dataclass(eq=False, repr=False)
+class EddsaPublicKey(betterproto.Message):
+    """An Eddsa public key."""
+
+    public_key: bytes = betterproto.bytes_field(1)
+    """The public key."""
 
 
 @dataclass(eq=False, repr=False)
@@ -247,6 +302,26 @@ class ValueType(betterproto.Message):
         13, group="value_type"
     )
     """A store id."""
+
+    eddsa_private_key_share: "betterproto_lib_google_protobuf.Empty" = (
+        betterproto.message_field(14, group="value_type")
+    )
+    """An Eddsa private key share."""
+
+    eddsa_signature: "betterproto_lib_google_protobuf.Empty" = (
+        betterproto.message_field(15, group="value_type")
+    )
+    """An Eddsa signature."""
+
+    eddsa_message: "betterproto_lib_google_protobuf.Empty" = betterproto.message_field(
+        16, group="value_type"
+    )
+    """An Eddsa message."""
+
+    eddsa_public_key: "betterproto_lib_google_protobuf.Empty" = (
+        betterproto.message_field(17, group="value_type")
+    )
+    """An Eddsa public key."""
 
 
 @dataclass(eq=False, repr=False)

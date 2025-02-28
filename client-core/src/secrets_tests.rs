@@ -253,3 +253,114 @@ assert store_id.value == store_id_bytes  # Compare against the same bytes
         .unwrap();
     })
 }
+
+#[test]
+fn test_eddsa_private_key() {
+    Python::with_gil(|py| {
+        Python::run_bound(
+            py,
+            r#"
+from nillion_client_core import *
+
+eddsa_pk_ba = bytearray([84, 104, 105, 115, 32, 109, 101, 115, 115, 97, 103, 101, 32, 105, 115, 32, 101, 120, 97, 99, 116, 108, 121, 32, 51, 50, 32, 98, 121, 116, 101, 0])
+eddsa_pk = EddsaPrivateKey(eddsa_pk_ba)
+assert eddsa_pk.value == eddsa_pk_ba
+"#,
+            None,
+            None,
+        )
+        .unwrap();
+    })
+}
+
+#[test]
+fn test_bad_eddsa_private_key() {
+    Python::with_gil(|py| {
+        Python::run_bound(
+            py,
+            r#"
+from nillion_client_core import *
+import os
+
+# Check eddsa private key creation fails with bytearray size different from 32
+try:
+    eddsa_pk_ba = bytearray(os.urandom(33))
+    eddsa_pk = EddsaPrivateKey(eddsa_pk_ba)
+    raise AssertionError("Expected ValueError not raised for invalid key size")
+except ValueError as e:
+    assert "Private key format error" in str(e), "Unexpected error message"
+
+# Check eddsa private key creation fails with 0 key
+try:
+    zero_key_ba = bytearray([0] * 32)
+    eddsa_pk = EddsaPrivateKey(zero_key_ba)
+    raise AssertionError("Expected ValueError not raised for zero key")
+except ValueError as e:
+    assert "Private key format error" in str(e), "Unexpected error message"
+"#,
+            None,
+            None,
+        )
+        .unwrap();
+    })
+}
+
+#[test]
+fn test_eddsa_public_key() {
+    Python::with_gil(|py| {
+        Python::run_bound(
+            py,
+            r#"
+from nillion_client_core import *
+import os
+
+key_bytes = bytearray(os.urandom(32))
+eddsa_pk = EddsaPublicKey(key_bytes)
+assert eddsa_pk.value == key_bytes  # Compare against the same bytes
+"#,
+            None,
+            None,
+        )
+        .unwrap();
+    })
+}
+
+#[test]
+fn test_eddsa_message() {
+    Python::with_gil(|py| {
+        Python::run_bound(
+            py,
+            r#"
+from nillion_client_core import *
+import os
+
+eddsa_msg_ba = bytearray(os.urandom(45))
+eddsa_msg = EddsaMessage(eddsa_msg_ba)
+"#,
+            None,
+            None,
+        )
+        .unwrap();
+    })
+}
+
+#[test]
+fn test_eddsa_signature() {
+    Python::with_gil(|py| {
+        Python::run_bound(
+            py,
+            r#"
+from nillion_client_core import *
+import os
+
+r = bytearray([6, 125, 237, 201, 123, 78, 227, 152, 251, 46, 236, 39, 224, 73, 18, 4, 103, 85, 109, 69, 181, 210, 56, 234, 17, 157, 209, 38, 242, 124, 237, 250])
+z = bytearray(os.urandom(10))
+eddsa_msg = EddsaSignature((r, z))
+print("Eddsa signature is: ", eddsa_msg.value)
+"#,
+            None,
+            None,
+        )
+        .unwrap();
+    })
+}

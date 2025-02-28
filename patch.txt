@@ -1,0 +1,1892 @@
+diff --git a/.nil-sdk.toml b/.nil-sdk.toml
+index 7dafb23..1d6ec7b 100644
+--- a/.nil-sdk.toml
++++ b/.nil-sdk.toml
+@@ -1 +1 @@
+-version = "v0.9.0-rc.62"
++version = "v0.10.0-rc.23"
+\ No newline at end of file
+diff --git a/client-core/Cargo.lock b/client-core/Cargo.lock
+index 09d5d29..efb99dd 100644
+--- a/client-core/Cargo.lock
++++ b/client-core/Cargo.lock
+@@ -39,12 +39,18 @@ version = "0.2.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
+ 
++[[package]]
++name = "base64"
++version = "0.13.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
++
+ [[package]]
+ name = "basic-types"
+ version = "0.1.0"
+ dependencies = [
+  "hex",
+- "thiserror",
++ "thiserror 1.0.68",
+  "uuid",
+ ]
+ 
+@@ -96,6 +102,37 @@ version = "1.0.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+ 
++[[package]]
++name = "cggmp21-keygen"
++version = "0.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "aaa8c850290c494f951abe0350e56c31e4f5664863490197490ff48cb825447d"
++dependencies = [
++ "digest",
++ "displaydoc",
++ "generic-ec",
++ "generic-ec-zkp",
++ "hex",
++ "key-share",
++ "rand_core",
++ "round-based",
++ "serde",
++ "serde_with",
++ "sha2",
++ "thiserror 1.0.68",
++ "udigest",
++]
++
++[[package]]
++name = "chrono"
++version = "0.4.40"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1a7964611d71df112cb1730f2ee67324fcf4d0fc6606acbbe9bfe06df124637c"
++dependencies = [
++ "num-traits",
++ "serde",
++]
++
+ [[package]]
+ name = "cmake"
+ version = "0.1.52"
+@@ -162,6 +199,8 @@ dependencies = [
+  "cpufeatures",
+  "curve25519-dalek-derive",
+  "fiat-crypto",
++ "group",
++ "rand_core",
+  "rustc_version",
+  "subtle",
+  "zeroize",
+@@ -178,6 +217,41 @@ dependencies = [
+  "syn 2.0.87",
+ ]
+ 
++[[package]]
++name = "darling"
++version = "0.20.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6f63b86c8a8826a49b8c21f08a2d07338eec8d900540f8630dc76284be802989"
++dependencies = [
++ "darling_core",
++ "darling_macro",
++]
++
++[[package]]
++name = "darling_core"
++version = "0.20.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "95133861a8032aaea082871032f5815eb9e98cef03fa916ab4500513994df9e5"
++dependencies = [
++ "fnv",
++ "ident_case",
++ "proc-macro2",
++ "quote",
++ "strsim",
++ "syn 2.0.87",
++]
++
++[[package]]
++name = "darling_macro"
++version = "0.20.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d336a2a514f6ccccaa3e09b02d41d35330c07ddf03a62165fcec10bb561c7806"
++dependencies = [
++ "darling_core",
++ "quote",
++ "syn 2.0.87",
++]
++
+ [[package]]
+ name = "der"
+ version = "0.7.9"
+@@ -188,6 +262,15 @@ dependencies = [
+  "zeroize",
+ ]
+ 
++[[package]]
++name = "deranged"
++version = "0.3.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
++dependencies = [
++ "powerfmt",
++]
++
+ [[package]]
+ name = "digest"
+ version = "0.10.7"
+@@ -196,6 +279,7 @@ checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
+ dependencies = [
+  "block-buffer",
+  "crypto-common",
++ "subtle",
+ ]
+ 
+ [[package]]
+@@ -219,17 +303,6 @@ dependencies = [
+  "proc-macro-error",
+ ]
+ 
+-[[package]]
+-name = "ecdsa-keypair"
+-version = "0.1.0"
+-dependencies = [
+- "generic-ec",
+- "key-share",
+- "rand",
+- "subtle",
+- "thiserror",
+-]
+-
+ [[package]]
+ name = "educe"
+ version = "0.4.23"
+@@ -347,12 +420,50 @@ version = "0.4.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
+ 
++[[package]]
++name = "fnv"
++version = "1.0.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
++
++[[package]]
++name = "futures-core"
++version = "0.3.31"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "05f29059c0c2090612e8d742178b0580d2dc940c837851ad723096f87af6663e"
++
++[[package]]
++name = "futures-sink"
++version = "0.3.31"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e575fab7d1e0dcb8d0c7bcf9a63ee213816ab51902e6d244a95819acacf1d4f7"
++
++[[package]]
++name = "futures-task"
++version = "0.3.31"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f90f7dce0722e95104fcb095585910c0977252f286e354b5e3bd38902cd99988"
++
++[[package]]
++name = "futures-util"
++version = "0.3.31"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9fa08315bb612088cc391249efdc3bc77536f16c91f6cf495e6fbe85b20a4a81"
++dependencies = [
++ "futures-core",
++ "futures-sink",
++ "futures-task",
++ "pin-project-lite",
++ "pin-utils",
++]
++
+ [[package]]
+ name = "generic-array"
+ version = "0.14.7"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
+ dependencies = [
++ "serde",
+  "typenum",
+  "version_check",
+  "zeroize",
+@@ -365,12 +476,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "50e3268b3f97e2046ebf69e24a1e7e12dad4dec247d87f59268fd57ab514b5f8"
+ dependencies = [
+  "curve25519-dalek",
++ "digest",
+  "generic-ec-core",
+  "generic-ec-curves",
+  "hex",
+- "phantom-type",
++ "phantom-type 0.4.2",
+  "rand_core",
++ "rand_hash",
++ "serde",
++ "serde_with",
+  "subtle",
++ "udigest",
+  "zeroize",
+ ]
+ 
+@@ -382,6 +498,7 @@ checksum = "049128cc67cac6176ada5218e294ce46421470d92a7340c93d5cfd3ecfbc29a4"
+ dependencies = [
+  "generic-array",
+  "rand_core",
++ "serde",
+  "subtle",
+  "zeroize",
+ ]
+@@ -392,8 +509,10 @@ version = "0.2.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "1e663405a17b229dede990904edcfd2056cf6641f1240869a1f44fa13bd4ee4d"
+ dependencies = [
++ "curve25519-dalek",
+  "elliptic-curve",
+  "generic-ec-core",
++ "group",
+  "k256",
+  "rand_core",
+  "sha2",
+@@ -426,6 +545,24 @@ dependencies = [
+  "wasi",
+ ]
+ 
++[[package]]
++name = "givre"
++version = "0.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "af482004b1f70b5b3b584c3fc3733dd24c71f8c0081a6087f49e09746746788a"
++dependencies = [
++ "cggmp21-keygen",
++ "digest",
++ "generic-ec",
++ "hd-wallet",
++ "k256",
++ "key-share",
++ "rand_core",
++ "serde",
++ "sha2",
++ "static_assertions",
++]
++
+ [[package]]
+ name = "group"
+ version = "0.13.0"
+@@ -443,6 +580,19 @@ version = "0.15.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3a9bfc1af68b1726ea47d3d5109de126281def866b33970e10fbab11b5dafab3"
+ 
++[[package]]
++name = "hd-wallet"
++version = "0.6.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6522551bb35937363845f39a6d4c49e60bdb35a8f7154ebdd078cab50be97992"
++dependencies = [
++ "generic-array",
++ "generic-ec",
++ "hmac",
++ "sha2",
++ "subtle",
++]
++
+ [[package]]
+ name = "heck"
+ version = "0.4.1"
+@@ -460,6 +610,24 @@ name = "hex"
+ version = "0.4.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
++dependencies = [
++ "serde",
++]
++
++[[package]]
++name = "hmac"
++version = "0.12.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
++dependencies = [
++ "digest",
++]
++
++[[package]]
++name = "ident_case"
++version = "1.0.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
+ 
+ [[package]]
+ name = "indexmap"
+@@ -487,6 +655,12 @@ dependencies = [
+  "either",
+ ]
+ 
++[[package]]
++name = "itoa"
++version = "1.0.14"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d75a2a4b1b190afb6f5425f10f6a8f959d2ea0b9c2b1d79553551850539e4674"
++
+ [[package]]
+ name = "jit-compiler"
+ version = "0.1.0"
+@@ -500,7 +674,7 @@ dependencies = [
+  "nada-compiler-backend",
+  "nada-type",
+  "substring",
+- "thiserror",
++ "thiserror 1.0.68",
+ ]
+ 
+ [[package]]
+@@ -515,14 +689,18 @@ dependencies = [
+ 
+ [[package]]
+ name = "key-share"
+-version = "0.5.0"
++version = "0.6.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "8ea364cb2397405d8c79afd3de173ca7e2e1d83a4ddd94d359263480ad96f06f"
++checksum = "3ee8e510bb9f738ac400b7dedd98aeb23677c6b48cd3b1b682651ea5091f4282"
+ dependencies = [
+  "displaydoc",
+  "generic-ec",
+  "generic-ec-zkp",
++ "hex",
+  "rand_core",
++ "serde",
++ "serde_with",
++ "thiserror 1.0.68",
+ ]
+ 
+ [[package]]
+@@ -547,14 +725,13 @@ checksum = "04cbf5b083de1c7e0222a7a51dbfdba1cbe1c6ab0b15e29fff3f6c077fd9cd9f"
+ name = "math_lib"
+ version = "0.1.0"
+ dependencies = [
+- "basic-types",
+  "crypto-bigint",
+  "num-bigint",
+  "num-traits",
+  "paste",
+  "rand",
+  "subtle",
+- "thiserror",
++ "thiserror 1.0.68",
+ ]
+ 
+ [[package]]
+@@ -583,7 +760,7 @@ dependencies = [
+  "serde",
+  "serde_repr",
+  "substring",
+- "thiserror",
++ "thiserror 1.0.68",
+ ]
+ 
+ [[package]]
+@@ -601,12 +778,12 @@ name = "mpc-vm"
+ version = "0.1.0"
+ dependencies = [
+  "anyhow",
+- "ecdsa-keypair",
+  "generic-ec",
+  "jit-compiler",
+  "nada-compiler-backend",
+  "nada-value",
+  "strum",
++ "threshold-keypair",
+ ]
+ 
+ [[package]]
+@@ -621,12 +798,11 @@ version = "0.1.0"
+ dependencies = [
+  "anyhow",
+  "ariadne",
+- "basic-types",
+  "duplicate",
+  "mir-model",
+  "nada-value",
+  "num-bigint",
+- "thiserror",
++ "thiserror 1.0.68",
+ ]
+ 
+ [[package]]
+@@ -638,7 +814,7 @@ dependencies = [
+  "serde",
+  "strum",
+  "strum_macros",
+- "thiserror",
++ "thiserror 1.0.68",
+  "types-proc-macros",
+ ]
+ 
+@@ -648,9 +824,9 @@ version = "0.1.0"
+ dependencies = [
+  "anyhow",
+  "basic-types",
+- "ecdsa-keypair",
+  "enum-as-inner",
+  "generic-ec",
++ "givre",
+  "indexmap",
+  "key-share",
+  "math_lib",
+@@ -659,7 +835,8 @@ dependencies = [
+  "num-traits",
+  "shamir-sharing",
+  "strum_macros",
+- "thiserror",
++ "thiserror 1.0.68",
++ "threshold-keypair",
+  "types-proc-macros",
+ ]
+ 
+@@ -668,13 +845,13 @@ name = "nillion-client-core"
+ version = "0.1.0"
+ dependencies = [
+  "basic-types",
+- "ecdsa-keypair",
+  "key-share",
+  "math_lib",
+  "mpc-vm",
+  "nada-value",
+  "program-auditor",
+  "shamir-sharing",
++ "threshold-keypair",
+ ]
+ 
+ [[package]]
+@@ -696,6 +873,12 @@ dependencies = [
+  "num-traits",
+ ]
+ 
++[[package]]
++name = "num-conv"
++version = "0.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "51d515d32fb182ee37cda2ccdcb92950d6a3c2893aa280e540671c2cd0f3b1d9"
++
+ [[package]]
+ name = "num-integer"
+ version = "0.1.46"
+@@ -736,6 +919,15 @@ dependencies = [
+  "indexmap",
+ ]
+ 
++[[package]]
++name = "phantom-type"
++version = "0.3.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f710afd11c9711b04f97ab61bb9747d5a04562fdf0f9f44abc3de92490084982"
++dependencies = [
++ "educe",
++]
++
+ [[package]]
+ name = "phantom-type"
+ version = "0.4.2"
+@@ -745,12 +937,30 @@ dependencies = [
+  "educe",
+ ]
+ 
++[[package]]
++name = "pin-project-lite"
++version = "0.2.16"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
++
++[[package]]
++name = "pin-utils"
++version = "0.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
++
+ [[package]]
+ name = "portable-atomic"
+ version = "1.9.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "cc9c68a3f6da06753e9335d63e27f6b9754dd1920d941135b7ea8224f141adb2"
+ 
++[[package]]
++name = "powerfmt"
++version = "0.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
++
+ [[package]]
+ name = "ppv-lite86"
+ version = "0.2.20"
+@@ -810,7 +1020,7 @@ dependencies = [
+  "anyhow",
+  "mpc-vm",
+  "nada-compiler-backend",
+- "thiserror",
++ "thiserror 1.0.68",
+ ]
+ 
+ [[package]]
+@@ -977,6 +1187,17 @@ dependencies = [
+  "getrandom",
+ ]
+ 
++[[package]]
++name = "rand_hash"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "16bc1dd921383c6564eb0b8252f5b3f6622b84d40c6e35f5e6790e1fd7abb7a9"
++dependencies = [
++ "digest",
++ "rand_core",
++ "udigest",
++]
++
+ [[package]]
+ name = "regex"
+ version = "1.11.1"
+@@ -1006,6 +1227,30 @@ version = "0.8.5"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
+ 
++[[package]]
++name = "round-based"
++version = "0.4.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "da76edf50de0a9d6911fc79261bb04cc9f3f3a375e0201799f5edf58499af341"
++dependencies = [
++ "futures-util",
++ "phantom-type 0.3.1",
++ "round-based-derive",
++ "thiserror 2.0.11",
++ "tracing",
++]
++
++[[package]]
++name = "round-based-derive"
++version = "0.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4afa4d5b318bcafae8a7ebc57c1cb7d4b2db7358293e34d71bfd605fd327cc13"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 1.0.109",
++]
++
+ [[package]]
+ name = "rustc-hash"
+ version = "2.1.0"
+@@ -1040,6 +1285,12 @@ version = "1.0.18"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0e819f2bc632f285be6d7cd36e25940d45b2391dd6d9b939e79de557f7014248"
+ 
++[[package]]
++name = "ryu"
++version = "1.0.19"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6ea1a2d0a644769cc99faa24c3ad26b379b786fe7c36fd3c546254801650e6dd"
++
+ [[package]]
+ name = "sec1"
+ version = "0.7.3"
+@@ -1079,6 +1330,18 @@ dependencies = [
+  "syn 2.0.87",
+ ]
+ 
++[[package]]
++name = "serde_json"
++version = "1.0.139"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "44f86c3acccc9c65b153fe1b85a3be07fe5515274ec9f0653b4a0875731c72a6"
++dependencies = [
++ "itoa",
++ "memchr",
++ "ryu",
++ "serde",
++]
++
+ [[package]]
+ name = "serde_repr"
+ version = "0.1.19"
+@@ -1090,6 +1353,33 @@ dependencies = [
+  "syn 2.0.87",
+ ]
+ 
++[[package]]
++name = "serde_with"
++version = "2.3.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "07ff71d2c147a7b57362cead5e22f772cd52f6ab31cfcd9edcd7f6aeb2a0afbe"
++dependencies = [
++ "base64",
++ "chrono",
++ "hex",
++ "serde",
++ "serde_json",
++ "serde_with_macros",
++ "time",
++]
++
++[[package]]
++name = "serde_with_macros"
++version = "2.3.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "881b6f881b17d13214e5d494c939ebab463d01264ce1811e9d4ac3a882e7695f"
++dependencies = [
++ "darling",
++ "proc-macro2",
++ "quote",
++ "syn 2.0.87",
++]
++
+ [[package]]
+ name = "sha2"
+ version = "0.10.8"
+@@ -1110,7 +1400,7 @@ dependencies = [
+  "math_lib",
+  "rand",
+  "rustc-hash",
+- "thiserror",
++ "thiserror 1.0.68",
+ ]
+ 
+ [[package]]
+@@ -1119,6 +1409,18 @@ version = "1.3.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
+ 
++[[package]]
++name = "static_assertions"
++version = "1.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
++
++[[package]]
++name = "strsim"
++version = "0.11.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
++
+ [[package]]
+ name = "strum"
+ version = "0.26.3"
+@@ -1204,7 +1506,16 @@ version = "1.0.68"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "02dd99dc800bbb97186339685293e1cc5d9df1f8fae2d0aecd9ff1c77efea892"
+ dependencies = [
+- "thiserror-impl",
++ "thiserror-impl 1.0.68",
++]
++
++[[package]]
++name = "thiserror"
++version = "2.0.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d452f284b73e6d76dd36758a0c8684b1d5be31f92b89d07fd5822175732206fc"
++dependencies = [
++ "thiserror-impl 2.0.11",
+ ]
+ 
+ [[package]]
+@@ -1218,6 +1529,64 @@ dependencies = [
+  "syn 2.0.87",
+ ]
+ 
++[[package]]
++name = "thiserror-impl"
++version = "2.0.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "26afc1baea8a989337eeb52b6e72a039780ce45c3edfcc9c5b9d112feeb173c2"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.87",
++]
++
++[[package]]
++name = "threshold-keypair"
++version = "0.1.0"
++dependencies = [
++ "generic-ec",
++ "givre",
++ "key-share",
++ "rand",
++ "subtle",
++ "thiserror 1.0.68",
++]
++
++[[package]]
++name = "time"
++version = "0.3.37"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "35e7868883861bd0e56d9ac6efcaaca0d6d5d82a2a7ec8209ff492c07cf37b21"
++dependencies = [
++ "deranged",
++ "num-conv",
++ "powerfmt",
++ "serde",
++ "time-core",
++]
++
++[[package]]
++name = "time-core"
++version = "0.1.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ef927ca75afb808a4d64dd374f00a2adf8d0fcff8e7b184af886c3c87ec4a3f3"
++
++[[package]]
++name = "tracing"
++version = "0.1.41"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "784e0ac535deb450455cbfa28a6f0df145ea1bb7ae51b821cf5e7927fdcfbdd0"
++dependencies = [
++ "pin-project-lite",
++ "tracing-core",
++]
++
++[[package]]
++name = "tracing-core"
++version = "0.1.33"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e672c95779cf947c5311f83787af4fa8fffd12fb27e4993211a84bdfd9610f9c"
++
+ [[package]]
+ name = "typenum"
+ version = "1.17.0"
+@@ -1240,6 +1609,7 @@ version = "0.2.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "81cd61fa9fb78569e9fe34acf0048fd8cb9ebdbacc47af740745487287043ff0"
+ dependencies = [
++ "digest",
+  "udigest-derive",
+ ]
+ 
+diff --git a/client-core/nillion_client_core.pyi b/client-core/nillion_client_core.pyi
+index 8a05264..302472f 100644
+--- a/client-core/nillion_client_core.pyi
++++ b/client-core/nillion_client_core.pyi
+@@ -14,6 +14,10 @@ NadaValue = Union[
+     EcdsaSignature,
+     EcdsaPublicKey,
+     StoreId,
++    EddsaPrivateKey,
++    EddsaPublicKey,
++    EddsaSignature,
++    EddsaMessage,
+ ]
+ 
+ class SecretUnsignedInteger:
+@@ -139,6 +143,42 @@ class StoreId:
+     def __eq__(self, other: object) -> bool: ...
+     def __repr__(self) -> str: ...
+ 
++class EddsaPrivateKey:
++    """Encodes a secret as an eddsa private key."""
++
++    value: bytearray
++
++    def __init__(self, value: bytearray) -> None: ...
++    def __eq__(self, other: object) -> bool: ...
++    def __repr__(self) -> str: ...
++
++class EddsaPublicKey:
++    """Encodes an eddsa public key."""
++
++    value: bytearray
++
++    def __init__(self, value: bytearray) -> None: ...
++    def __eq__(self, other: object) -> bool: ...
++    def __repr__(self) -> str: ...
++
++class EddsaSignature:
++    """Encodes an eddsa signature."""
++
++    value: Tuple[bytearray, bytearray]
++
++    def __init__(self, value: Tuple[bytearray, bytearray]) -> None: ...
++    def __eq__(self, other: object) -> bool: ...
++    def __repr__(self) -> str: ...
++
++class EddsaMessage:
++    """Encodes an eddsa message."""
++
++    value: bytearray
++
++    def __init__(self, value: bytearray) -> None: ...
++    def __eq__(self, other: object) -> bool: ...
++    def __repr__(self) -> str: ...
++
+ class ProgramRequirements:
+     """A program preprocessing requirements"""
+ 
+@@ -205,6 +245,9 @@ class NadaValuesClassification:
+     ecdsa_private_key_shares: int
+     """The number of ecdsa private key shares."""
+ 
++    ecdsa_signature_shares: int
++    """The number of ecdsa signature shares."""
++
+ class SecretMasker:
+     """A secret masker. This allows masking and unmasking secrets."""
+ 
+diff --git a/client-core/src/encrypted_value.rs b/client-core/src/encrypted_value.rs
+index de1181c..6c9ac62 100644
+--- a/client-core/src/encrypted_value.rs
++++ b/client-core/src/encrypted_value.rs
+@@ -1,10 +1,11 @@
+ use nillion_client_core::{
+-    generic_ec::{curves::Secp256k1, serde::CurveName, NonZero, Point, Scalar, SecretScalar},
++    generic_ec::{serde::CurveName, Curve, NonZero, Point, Scalar, SecretScalar},
+     key_share::{DirtyCoreKeyShare, DirtyKeyInfo, Validate},
+-    privatekey::EcdsaPrivateKeyShare,
+-    signature::EcdsaSignatureShare,
++    privatekey::ThresholdPrivateKeyShare,
++    signature::{EcdsaSignatureShare, EddsaSignature},
+     values::{BlobPrimitiveType, Encoded, EncodedModularNumber, EncodedModulo, Encrypted, NadaValue},
+ };
++
+ use pyo3::{
+     exceptions::PyValueError,
+     pyclass, pymethods,
+@@ -36,6 +37,10 @@ pub enum EncryptedNadaValue {
+     EcdsaPrivateKey { i: u16, x: Vec<u8>, shared_public_key: Vec<u8>, public_shares: Vec<Vec<u8>> },
+     EcdsaPublicKey { value: Vec<u8> },
+     StoreId { value: Vec<u8> },
++    EddsaPrivateKey { i: u16, x: Vec<u8>, shared_public_key: Vec<u8>, public_shares: Vec<Vec<u8>> },
++    EddsaPublicKey { value: Vec<u8> },
++    EddsaSignature { value: Vec<u8> },
++    EddsaMessage { value: Vec<u8> },
+ }
+ 
+ impl EncryptedNadaValue {
+@@ -76,6 +81,22 @@ impl EncryptedNadaValue {
+                 }
+             }
+             NadaValue::StoreId(value) => Self::StoreId { value: value.to_vec() },
++            NadaValue::EddsaPrivateKey(key) => {
++                let key = key.into_inner();
++                Self::EddsaPrivateKey {
++                    i: key.i,
++                    x: key.x.clone().into_inner().as_ref().to_le_bytes().to_vec(),
++                    shared_public_key: key.key_info.shared_public_key.to_bytes(true).to_vec(),
++                    public_shares: key.key_info.public_shares.iter().map(|s| s.to_bytes(true).to_vec()).collect(),
++                }
++            }
++            NadaValue::EddsaPublicKey(value) => Self::EddsaPublicKey { value: value.to_vec() },
++            NadaValue::EddsaSignature(signature) => {
++                let mut out = vec![0u8; signature.serialized_len()];
++                signature.signature.write_to_slice(&mut out);
++                Self::EddsaSignature { value: out }
++            }
++            NadaValue::EddsaMessage(message) => Self::EddsaMessage { value: message },
+             _ => Err(PyValueError::new_err("Unsupported NadaValue variant for conversion to PyObject"))?,
+         };
+         Ok(value)
+@@ -153,8 +174,38 @@ impl EncryptedNadaValue {
+                 }
+                 .validate()
+                 .map_err(|e| PyValueError::new_err(e.to_string()))?;
+-                NadaValue::new_ecdsa_private_key(EcdsaPrivateKeyShare::new(share))
++                NadaValue::new_ecdsa_private_key(ThresholdPrivateKeyShare::new(share))
++            }
++            E::EddsaPrivateKey { i, x, shared_public_key, public_shares } => {
++                let share = DirtyCoreKeyShare {
++                    i,
++                    key_info: DirtyKeyInfo {
++                        curve: CurveName::new(),
++                        shared_public_key: non_zero_point_from_bytes(&shared_public_key)?,
++                        public_shares: public_shares
++                            .iter()
++                            .map(|s| non_zero_point_from_bytes(s))
++                            .collect::<Result<_, _>>()?,
++                        vss_setup: None,
++                    },
++                    x: non_zero_secret_scalar_from_bytes(&x)?,
++                }
++                .validate()
++                .map_err(|e| PyValueError::new_err(e.to_string()))?;
++                NadaValue::new_eddsa_private_key(ThresholdPrivateKeyShare::new(share))
++            }
++            E::EddsaPublicKey { value } => {
++                let value: [u8; 32] =
++                    value.try_into().map_err(|_| PyValueError::new_err("invalid public key length"))?;
++                NadaValue::new_eddsa_public_key(value)
++            }
++            E::EddsaSignature { value } => {
++                let signature = EddsaSignature::from_bytes(&value)
++                    .map_err(|_| PyValueError::new_err("Failed to deserialize EdDSA signature"))?;
++
++                NadaValue::new_eddsa_signature(signature)
+             }
++            E::EddsaMessage { value } => NadaValue::new_eddsa_message(value),
+         };
+         Ok(value)
+     }
+@@ -180,16 +231,20 @@ impl EncryptedNadaValue {
+             Self::EcdsaPrivateKey { .. } => "EcdsaPrivateKey {..}".into(),
+             Self::EcdsaPublicKey { .. } => "EcdsaPublicKey {..}".into(),
+             Self::StoreId { .. } => "StoreId {..}".into(),
++            Self::EddsaPrivateKey { .. } => "EddsaPrivateKey {..}".into(),
++            Self::EddsaPublicKey { .. } => "EddsaPublicKey {..}".into(),
++            Self::EddsaSignature { .. } => "EddsaSignature {..}".into(),
++            Self::EddsaMessage { .. } => "EddsaMessage {..}".into(),
+         }
+     }
+ }
+ 
+-fn non_zero_point_from_bytes(bytes: &[u8]) -> PyResult<NonZero<Point<Secp256k1>>> {
++fn non_zero_point_from_bytes<C: Curve>(bytes: &[u8]) -> PyResult<NonZero<Point<C>>> {
+     let point = Point::from_bytes(bytes).map_err(|_| PyValueError::new_err("invalid bytes"))?;
+     NonZero::from_point(point).ok_or_else(|| PyValueError::new_err("point is zero"))
+ }
+ 
+-fn non_zero_secret_scalar_from_bytes(bytes: &[u8]) -> PyResult<NonZero<SecretScalar<Secp256k1>>> {
++fn non_zero_secret_scalar_from_bytes<C: Curve>(bytes: &[u8]) -> PyResult<NonZero<SecretScalar<C>>> {
+     let scalar = SecretScalar::from_le_bytes(bytes).map_err(|_| PyValueError::new_err("invalid bytes"))?;
+     NonZero::from_secret_scalar(scalar).ok_or_else(|| PyValueError::new_err("scalar is zero"))
+ }
+@@ -211,6 +266,10 @@ pub enum EncryptedNadaType {
+     EcdsaPrivateKey(),
+     EcdsaPublicKey(),
+     StoreId(),
++    EddsaPrivateKey(),
++    EddsaPublicKey(),
++    EddsaSignature(),
++    EddsaMessage(),
+ }
+ 
+ impl EncryptedNadaType {
+@@ -236,6 +295,10 @@ impl EncryptedNadaType {
+             T::EcdsaSignature => Self::EcdsaSignature(),
+             T::EcdsaPublicKey => Self::EcdsaPublicKey(),
+             T::StoreId => Self::StoreId(),
++            T::EddsaPrivateKey => Self::EddsaPrivateKey(),
++            T::EddsaPublicKey => Self::EddsaPublicKey(),
++            T::EddsaSignature => Self::EddsaSignature(),
++            T::EddsaMessage => Self::EddsaMessage(),
+             T::SecretInteger | T::SecretUnsignedInteger | T::SecretBoolean | T::NTuple { .. } | T::Object { .. } => {
+                 return Err(PyValueError::new_err(format!("unsupported type: {t}",)));
+             }
+@@ -270,6 +333,10 @@ impl EncryptedNadaType {
+             EncryptedNadaType::EcdsaPrivateKey() => T::EcdsaPrivateKey,
+             EncryptedNadaType::EcdsaPublicKey() => T::EcdsaPublicKey,
+             EncryptedNadaType::StoreId() => T::StoreId,
++            EncryptedNadaType::EddsaPrivateKey() => T::EddsaPrivateKey,
++            EncryptedNadaType::EddsaPublicKey() => T::EddsaPublicKey,
++            EncryptedNadaType::EddsaSignature() => T::EddsaSignature,
++            EncryptedNadaType::EddsaMessage() => T::EddsaMessage,
+         };
+         Ok(output)
+     }
+@@ -293,6 +360,10 @@ impl EncryptedNadaType {
+             Self::EcdsaPrivateKey { .. } => "EcdsaPrivateKey {..}".into(),
+             Self::EcdsaPublicKey { .. } => "EcdsaPublicKey {..}".into(),
+             Self::StoreId { .. } => "StoreId {..}".into(),
++            Self::EddsaPrivateKey { .. } => "EddsaPrivateKey {..}".into(),
++            Self::EddsaPublicKey { .. } => "EddsaPublicKey {..}".into(),
++            Self::EddsaSignature { .. } => "EddsaSignature {..}".into(),
++            Self::EddsaMessage { .. } => "EddsaMessage {..}".into(),
+         }
+     }
+ }
+diff --git a/client-core/src/lib.rs b/client-core/src/lib.rs
+index ff91bfe..9b1341a 100644
+--- a/client-core/src/lib.rs
++++ b/client-core/src/lib.rs
+@@ -118,6 +118,9 @@ struct NadaValuesClassification {
+ 
+     /// The number of ecdsa key shares
+     ecdsa_private_key_shares: u64,
++
++    /// The number of ecdsa signatures shares
++    ecdsa_signature_shares: u64,
+ }
+ 
+ #[pymethods]
+@@ -132,7 +135,12 @@ impl NadaValuesClassification {
+ 
+ impl From<::nillion_client_core::values::NadaValuesClassification> for NadaValuesClassification {
+     fn from(value: ::nillion_client_core::values::NadaValuesClassification) -> Self {
+-        Self { shares: value.shares, public: value.public, ecdsa_private_key_shares: value.ecdsa_private_key_shares }
++        Self {
++            shares: value.shares,
++            public: value.public,
++            ecdsa_private_key_shares: value.ecdsa_private_key_shares,
++            ecdsa_signature_shares: value.ecdsa_signature_shares,
++        }
+     }
+ }
+ 
+diff --git a/client-core/src/secrets_tests.rs b/client-core/src/secrets_tests.rs
+index 5b8364d..14fa7da 100644
+--- a/client-core/src/secrets_tests.rs
++++ b/client-core/src/secrets_tests.rs
+@@ -253,3 +253,114 @@ assert store_id.value == store_id_bytes  # Compare against the same bytes
+         .unwrap();
+     })
+ }
++
++#[test]
++fn test_eddsa_private_key() {
++    Python::with_gil(|py| {
++        Python::run_bound(
++            py,
++            r#"
++from nillion_client_core import *
++
++eddsa_pk_ba = bytearray([84, 104, 105, 115, 32, 109, 101, 115, 115, 97, 103, 101, 32, 105, 115, 32, 101, 120, 97, 99, 116, 108, 121, 32, 51, 50, 32, 98, 121, 116, 101, 0])
++eddsa_pk = EddsaPrivateKey(eddsa_pk_ba)
++assert eddsa_pk.value == eddsa_pk_ba
++"#,
++            None,
++            None,
++        )
++        .unwrap();
++    })
++}
++
++#[test]
++fn test_bad_eddsa_private_key() {
++    Python::with_gil(|py| {
++        Python::run_bound(
++            py,
++            r#"
++from nillion_client_core import *
++import os
++
++# Check eddsa private key creation fails with bytearray size different from 32
++try:
++    eddsa_pk_ba = bytearray(os.urandom(33))
++    eddsa_pk = EddsaPrivateKey(eddsa_pk_ba)
++    raise AssertionError("Expected ValueError not raised for invalid key size")
++except ValueError as e:
++    assert "Private key format error" in str(e), "Unexpected error message"
++
++# Check eddsa private key creation fails with 0 key
++try:
++    zero_key_ba = bytearray([0] * 32)
++    eddsa_pk = EddsaPrivateKey(zero_key_ba)
++    raise AssertionError("Expected ValueError not raised for zero key")
++except ValueError as e:
++    assert "Private key format error" in str(e), "Unexpected error message"
++"#,
++            None,
++            None,
++        )
++        .unwrap();
++    })
++}
++
++#[test]
++fn test_eddsa_public_key() {
++    Python::with_gil(|py| {
++        Python::run_bound(
++            py,
++            r#"
++from nillion_client_core import *
++import os
++
++key_bytes = bytearray(os.urandom(32))
++eddsa_pk = EddsaPublicKey(key_bytes)
++assert eddsa_pk.value == key_bytes  # Compare against the same bytes
++"#,
++            None,
++            None,
++        )
++        .unwrap();
++    })
++}
++
++#[test]
++fn test_eddsa_message() {
++    Python::with_gil(|py| {
++        Python::run_bound(
++            py,
++            r#"
++from nillion_client_core import *
++import os
++
++eddsa_msg_ba = bytearray(os.urandom(45))
++eddsa_msg = EddsaMessage(eddsa_msg_ba)
++"#,
++            None,
++            None,
++        )
++        .unwrap();
++    })
++}
++
++#[test]
++fn test_eddsa_signature() {
++    Python::with_gil(|py| {
++        Python::run_bound(
++            py,
++            r#"
++from nillion_client_core import *
++import os
++
++r = bytearray([6, 125, 237, 201, 123, 78, 227, 152, 251, 46, 236, 39, 224, 73, 18, 4, 103, 85, 109, 69, 181, 210, 56, 234, 17, 157, 209, 38, 242, 124, 237, 250])
++z = bytearray(os.urandom(10))
++eddsa_msg = EddsaSignature((r, z))
++print("Eddsa signature is: ", eddsa_msg.value)
++"#,
++            None,
++            None,
++        )
++        .unwrap();
++    })
++}
+diff --git a/client-core/src/values/ecdsa_private_key.rs b/client-core/src/values/ecdsa_private_key.rs
+index 84fd33a..3d459b0 100644
+--- a/client-core/src/values/ecdsa_private_key.rs
++++ b/client-core/src/values/ecdsa_private_key.rs
+@@ -62,7 +62,7 @@ impl EcdsaPrivateKey {
+     /// Returns a new EcdsaPrivateKey. The byte array should be in big-endian format.
+     #[new]
+     fn new(value: &Bound<'_, PyByteArray>) -> PyResult<EcdsaPrivateKey> {
+-        let ecdsa_private_key = privatekey::EcdsaPrivateKey::from_bytes(&value.to_vec()).map_err(|_| {
++        let ecdsa_private_key = privatekey::ThresholdPrivateKey::from_be_bytes(&value.to_vec()).map_err(|_| {
+             PyValueError::new_err(
+                 "Private key format error. Check your ecdsa secret key is exactly 32 bytes and different from 0.",
+             )
+@@ -101,7 +101,7 @@ impl EcdsaPrivateKey {
+             .as_ecdsa_private_key()
+             .ok_or_else(|| PyValueError::new_err("expected ecdsa private key"))?
+             .clone()
+-            .to_bytes();
++            .to_be_bytes();
+         Ok(PyByteArray::new_bound(py, &bytes).into())
+     }
+ 
+diff --git a/client-core/src/values/ecdsa_signature.rs b/client-core/src/values/ecdsa_signature.rs
+index e48e0dc..e51e2cf 100644
+--- a/client-core/src/values/ecdsa_signature.rs
++++ b/client-core/src/values/ecdsa_signature.rs
+@@ -82,12 +82,12 @@ impl EcdsaSignature {
+         self.inner.to_string()
+     }
+ 
+-    /// Getter for the `r` inside a
++    /// Getter for the tuple `(r, s)` inside a
+     /// :py:class:`EcdsaSignature` instance.
+     ///
+     /// Returns
+     /// -------
+-    /// int
++    /// tuple
+     ///     The value of the private ecdsa key.
+     ///
+     /// Example
+diff --git a/client-core/src/values/mod.rs b/client-core/src/values/mod.rs
+index 5aa9e2f..7cf9766 100644
+--- a/client-core/src/values/mod.rs
++++ b/client-core/src/values/mod.rs
+@@ -6,6 +6,10 @@ use self::{
+     ecdsa_private_key::EcdsaPrivateKey,
+     ecdsa_public_key::EcdsaPublicKey,
+     ecdsa_signature::EcdsaSignature,
++    eddsa_message::EddsaMessage,
++    eddsa_private_key::EddsaPrivateKey,
++    eddsa_public_key::EddsaPublicKey,
++    eddsa_signature::EddsaSignature,
+     integer::{Integer, SecretInteger},
+     store_id::StoreId,
+     unsigned_integer::{SecretUnsignedInteger, UnsignedInteger},
+@@ -21,6 +25,10 @@ pub mod ecdsa_digest_message;
+ pub mod ecdsa_private_key;
+ pub mod ecdsa_public_key;
+ pub mod ecdsa_signature;
++pub mod eddsa_message;
++pub mod eddsa_private_key;
++pub mod eddsa_public_key;
++pub mod eddsa_signature;
+ pub mod integer;
+ pub mod store_id;
+ pub mod unsigned_integer;
+@@ -46,6 +54,10 @@ pub(crate) fn nada_value_clear_to_pyobject(py: Python<'_>, value: NadaValue<Clea
+         NadaValue::Array { values, inner_type } => {
+             Array::try_from(NadaValue::Array { values, inner_type })?.into_py(py)
+         }
++        NadaValue::EddsaPrivateKey(value) => EddsaPrivateKey::try_from(NadaValue::EddsaPrivateKey(value))?.into_py(py),
++        NadaValue::EddsaPublicKey(value) => EddsaPublicKey::try_from(NadaValue::EddsaPublicKey(value))?.into_py(py),
++        NadaValue::EddsaSignature(value) => EddsaSignature::try_from(NadaValue::EddsaSignature(value))?.into_py(py),
++        NadaValue::EddsaMessage(value) => EddsaMessage::try_from(NadaValue::EddsaMessage(value))?.into_py(py),
+         NadaValue::Tuple { .. }
+         | NadaValue::NTuple { .. }
+         | NadaValue::Object { .. }
+@@ -85,6 +97,14 @@ fn pyany_to_nada_value_clear(value: Bound<PyAny>) -> Result<NadaValue<Clear>, Py
+         value.inner
+     } else if let Ok(value) = value.extract::<Array>() {
+         value.inner
++    } else if let Ok(value) = value.extract::<EddsaPrivateKey>() {
++        value.inner
++    } else if let Ok(value) = value.extract::<EddsaPublicKey>() {
++        value.inner
++    } else if let Ok(value) = value.extract::<EddsaSignature>() {
++        value.inner
++    } else if let Ok(value) = value.extract::<EddsaMessage>() {
++        value.inner
+     } else {
+         Err(PyValueError::new_err("Unsupported NadaValue variant for conversion to PyObject"))?
+     };
+@@ -127,5 +147,9 @@ pub fn add_module(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+     m.add_class::<EcdsaPublicKey>()?;
+     m.add_class::<EcdsaSignature>()?;
+     m.add_class::<StoreId>()?;
++    m.add_class::<EddsaPrivateKey>()?;
++    m.add_class::<EddsaPublicKey>()?;
++    m.add_class::<EddsaSignature>()?;
++    m.add_class::<EddsaMessage>()?;
+     Ok(())
+ }
+diff --git a/client-proto/src/nillion_client_proto/nillion/compute/v1/stream/__init__.py b/client-proto/src/nillion_client_proto/nillion/compute/v1/stream/__init__.py
+index b6d1945..7ad97dc 100644
+--- a/client-proto/src/nillion_client_proto/nillion/compute/v1/stream/__init__.py
++++ b/client-proto/src/nillion_client_proto/nillion/compute/v1/stream/__init__.py
+@@ -8,6 +8,24 @@ from dataclasses import dataclass
+ import betterproto
+ 
+ 
++class ComputeType(betterproto.Enum):
++    """
++    The type of compute performed. We currently support three types:
++     - GENERAL: A general compute that computes some Nada program.
++     - ECDSA_DKG: A specific compute operation for ECDSA distributed key generation.
++     - EDDSA_DKG: A specific compute operation for Eddsa distributed key generation.
++    """
++
++    GENERAL = 0
++    """A general compute."""
++
++    ECDSA_DKG = 1
++    """An ECDSA distributed key generation protocol."""
++
++    EDDSA_DKG = 2
++    """An Eddsa distributed key generation protocol."""
++
++
+ @dataclass(eq=False, repr=False)
+ class ComputeStreamMessage(betterproto.Message):
+     """A message for a compute stream."""
+@@ -22,3 +40,6 @@ class ComputeStreamMessage(betterproto.Message):
+ 
+     bincode_message: bytes = betterproto.bytes_field(2)
+     """The VM message in bincode format."""
++
++    compute_type: "ComputeType" = betterproto.enum_field(3)
++    """The type of compute."""
+diff --git a/client-proto/src/nillion_client_proto/nillion/payments/v1/config/__init__.py b/client-proto/src/nillion_client_proto/nillion/payments/v1/config/__init__.py
+index 483eb40..fb3f91b 100644
+--- a/client-proto/src/nillion_client_proto/nillion/payments/v1/config/__init__.py
++++ b/client-proto/src/nillion_client_proto/nillion/payments/v1/config/__init__.py
+@@ -16,3 +16,6 @@ class PaymentsConfigResponse(betterproto.Message):
+     """
+     The minimum amount of unil that can be added in a `Payments.add_funds` request.
+     """
++
++    credits_per_nil: int = betterproto.uint64_field(2)
++    """The number of credits one gets for every nil funded to an account."""
+diff --git a/client-proto/src/nillion_client_proto/nillion/values/v1/value/__init__.py b/client-proto/src/nillion_client_proto/nillion/values/v1/value/__init__.py
+index 47b0a3d..e2b1dc3 100644
+--- a/client-proto/src/nillion_client_proto/nillion/values/v1/value/__init__.py
++++ b/client-proto/src/nillion_client_proto/nillion/values/v1/value/__init__.py
+@@ -77,6 +77,20 @@ class Value(betterproto.Message):
+     store_id: "StoreId" = betterproto.message_field(14, group="value")
+     """A store id."""
+ 
++    eddsa_private_key_share: "EddsaPrivateKeyShare" = betterproto.message_field(
++        15, group="value"
++    )
++    """An Eddsa private key share."""
++
++    eddsa_signature: "EddsaSignature" = betterproto.message_field(16, group="value")
++    """An Eddsa signature."""
++
++    eddsa_message: "EddsaMessage" = betterproto.message_field(17, group="value")
++    """An Eddsa message."""
++
++    eddsa_public_key: "EddsaPublicKey" = betterproto.message_field(18, group="value")
++    """An Eddsa public key."""
++
+ 
+ @dataclass(eq=False, repr=False)
+ class PublicInteger(betterproto.Message):
+@@ -161,7 +175,7 @@ class EcdsaPublicKey(betterproto.Message):
+     """An ECDSA public key."""
+ 
+     public_key: bytes = betterproto.bytes_field(1)
+-    """The public key, in compressed form."""
++    """The public key."""
+ 
+ 
+ @dataclass(eq=False, repr=False)
+@@ -172,6 +186,47 @@ class StoreId(betterproto.Message):
+     """The store id."""
+ 
+ 
++@dataclass(eq=False, repr=False)
++class EddsaPrivateKeyShare(betterproto.Message):
++    """An Eddsa private key share."""
++
++    i: int = betterproto.uint32_field(1)
++    """Index of local party in key generation protocol."""
++
++    x: bytes = betterproto.bytes_field(2)
++    """The secret share x."""
++
++    shared_public_key: bytes = betterproto.bytes_field(3)
++    """Public key corresponding to shared secret key, in compressed form."""
++
++    public_shares: List[bytes] = betterproto.bytes_field(4)
++    """Public shares of all signers sharing the key, in compressed form."""
++
++
++@dataclass(eq=False, repr=False)
++class EddsaSignature(betterproto.Message):
++    """An Eddsa signature."""
++
++    signature: bytes = betterproto.bytes_field(1)
++    """The signature."""
++
++
++@dataclass(eq=False, repr=False)
++class EddsaMessage(betterproto.Message):
++    """An Eddsa message."""
++
++    message: bytes = betterproto.bytes_field(1)
++    """The message."""
++
++
++@dataclass(eq=False, repr=False)
++class EddsaPublicKey(betterproto.Message):
++    """An Eddsa public key."""
++
++    public_key: bytes = betterproto.bytes_field(1)
++    """The public key."""
++
++
+ @dataclass(eq=False, repr=False)
+ class ShamirSharesBlob(betterproto.Message):
+     """Shamir shares of a blob."""
+@@ -248,6 +303,26 @@ class ValueType(betterproto.Message):
+     )
+     """A store id."""
+ 
++    eddsa_private_key_share: "betterproto_lib_google_protobuf.Empty" = (
++        betterproto.message_field(14, group="value_type")
++    )
++    """An Eddsa private key share."""
++
++    eddsa_signature: "betterproto_lib_google_protobuf.Empty" = (
++        betterproto.message_field(15, group="value_type")
++    )
++    """An Eddsa signature."""
++
++    eddsa_message: "betterproto_lib_google_protobuf.Empty" = betterproto.message_field(
++        16, group="value_type"
++    )
++    """An Eddsa message."""
++
++    eddsa_public_key: "betterproto_lib_google_protobuf.Empty" = (
++        betterproto.message_field(17, group="value_type")
++    )
++    """An Eddsa public key."""
++
+ 
+ @dataclass(eq=False, repr=False)
+ class ArrayType(betterproto.Message):
+diff --git a/nilvm b/nilvm
+index c92a3b2..b5b4fe4 160000
+--- a/nilvm
++++ b/nilvm
+@@ -1 +1 @@
+-Subproject commit c92a3b2c3821f25915eb280513f402b3e04f18ff
++Subproject commit b5b4fe4588211a3c5cf7139fd16d2fd0c3492aa0
+diff --git a/src/nillion_client/__init__.py b/src/nillion_client/__init__.py
+index 181cc8a..0fb7fce 100644
+--- a/src/nillion_client/__init__.py
++++ b/src/nillion_client/__init__.py
+@@ -23,6 +23,10 @@ from nillion_client_core import (
+     EcdsaSignature,
+     EcdsaPublicKey,
+     StoreId,
++    EddsaPrivateKey,
++    EddsaPublicKey,
++    EddsaSignature,
++    EddsaMessage,
+ )
+ from nillion_client_proto.nillion.preprocessing.v1.element import PreprocessingElement
+ from cosmpy.crypto.keypairs import PrivateKey as NilChainPrivateKey
+@@ -57,6 +61,10 @@ __all__ = [
+     "EcdsaSignature",
+     "EcdsaPublicKey",
+     "StoreId",
++    "EddsaPrivateKey",
++    "EddsaPublicKey",
++    "EddsaSignature",
++    "EddsaMessage",
+     "PreprocessingElement",
+     "PrivateKey",
+     "NilChainPrivateKey",
+diff --git a/src/nillion_client/values.py b/src/nillion_client/values.py
+index 476645d..0034e9b 100644
+--- a/src/nillion_client/values.py
++++ b/src/nillion_client/values.py
+@@ -12,6 +12,10 @@ from nillion_client_proto.nillion.values.v1.value import (
+     EcdsaPublicKey,
+     EcdsaPrivateKeyShare,
+     EcdsaSignatureShare,
++    EddsaMessage,
++    EddsaPrivateKeyShare,
++    EddsaPublicKey,
++    EddsaSignature,
+     NamedValue,
+     PublicInteger,
+     ShamirShare,
+@@ -103,6 +107,25 @@ def encrypted_nada_value_to_protobuf(value: EncryptedNadaValue) -> Value:
+                     store_id=bytes(value.value),
+                 )
+             )
++        case EncryptedNadaValue.EddsaMessage():  # type: ignore
++            return Value(eddsa_message=EddsaMessage(message=bytes(value.value)))
++        case EncryptedNadaValue.EddsaSignature():  # type: ignore
++            return Value(eddsa_signature=EddsaSignature(signature=bytes(value.value)))
++        case EncryptedNadaValue.EddsaPrivateKey():  # type: ignore
++            return Value(
++                eddsa_private_key_share=EddsaPrivateKeyShare(
++                    i=value.i,
++                    x=bytes(value.x),
++                    shared_public_key=bytes(value.shared_public_key),
++                    public_shares=[bytes(s) for s in value.public_shares],
++                )
++            )
++        case EncryptedNadaValue.EddsaPublicKey():  # type: ignore
++            return Value(
++                eddsa_public_key=EddsaPublicKey(
++                    public_key=bytes(value.value),
++                )
++            )
+         case _:
+             raise Exception(f"unsupported type: {value}")
+ 
+@@ -157,6 +180,23 @@ def encrypted_nada_value_from_protobuf(value: Value) -> EncryptedNadaValue:
+             return EncryptedNadaValue.EcdsaPublicKey(
+                 value=bytes(value.public_key),
+             )
++        case Value(eddsa_message=value):
++            return EncryptedNadaValue.EddsaMessage(value=bytes(value.message))
++        case Value(eddsa_signature=value):
++            return EncryptedNadaValue.EddsaSignature(
++                value=bytes(value.signature),
++            )
++        case Value(eddsa_private_key_share=value):
++            return EncryptedNadaValue.EddsaPrivateKey(
++                i=value.i,
++                x=list(value.x),
++                shared_public_key=list(value.shared_public_key),
++                public_shares=[list(s) for s in value.public_shares],
++            )
++        case Value(eddsa_public_key=value):
++            return EncryptedNadaValue.EddsaPublicKey(
++                value=bytes(value.public_key),
++            )
+         case Value(store_id=value):
+             return EncryptedNadaValue.StoreId(
+                 value=bytes(value.store_id),
+@@ -203,6 +243,14 @@ def encrypted_nada_type_to_protobuf(nada_type: EncryptedNadaType) -> ValueType:
+             return ValueType(ecdsa_public_key=Empty())
+         case EncryptedNadaType.StoreId():  # type: ignore
+             return ValueType(store_id=Empty())
++        case EncryptedNadaType.EddsaMessage():  # type: ignore
++            return ValueType(eddsa_message=Empty())
++        case EncryptedNadaType.EddsaSignature():  # type: ignore
++            return ValueType(eddsa_signature=Empty())
++        case EncryptedNadaType.EddsaPrivateKey():  # type: ignore
++            return ValueType(eddsa_private_key_share=Empty())
++        case EncryptedNadaType.EddsaPublicKey():  # type: ignore
++            return ValueType(eddsa_public_key=Empty())
+         case _:
+             raise Exception(f"unsupported encrypted type: {nada_type}")
+ 
+@@ -241,5 +289,13 @@ def encrypted_nada_type_from_protobuf(nada_type: ValueType) -> EncryptedNadaType
+             return EncryptedNadaType.EcdsaPublicKey()  # type: ignore
+         case ValueType(store_id=_):
+             return EncryptedNadaType.StoreId()  # type: ignore
++        case ValueType(eddsa_message=_):
++            return EncryptedNadaType.EddsaMessage()  # type: ignore
++        case ValueType(eddsa_signature=_):
++            return EncryptedNadaType.EddsaSignature()  # type: ignore
++        case ValueType(eddsa_private_key_share=_):
++            return EncryptedNadaType.EddsaPrivateKey()  # type: ignore
++        case ValueType(eddsa_public_key=_):
++            return EncryptedNadaType.EddsaPublicKey()  # type: ignore
+         case _:
+             raise Exception(f"unsupported type: {nada_type}")
+diff --git a/src/nillion_client/vm_operation.py b/src/nillion_client/vm_operation.py
+index 5c4b138..1545928 100644
+--- a/src/nillion_client/vm_operation.py
++++ b/src/nillion_client/vm_operation.py
+@@ -20,6 +20,10 @@ from nillion_client_core import (
+     EcdsaDigestMessage,
+     EcdsaSignature,
+     EcdsaPublicKey,
++    EddsaPrivateKey,
++    EddsaSignature,
++    EddsaPublicKey,
++    EddsaMessage,
+     StoreId,
+ )
+ 
+@@ -55,6 +59,10 @@ NadaValue = Union[
+     EcdsaDigestMessage,
+     EcdsaSignature,
+     EcdsaPublicKey,
++    EddsaPrivateKey,
++    EddsaSignature,
++    EddsaPublicKey,
++    EddsaMessage,
+     StoreId,
+ ]
+ 
+diff --git a/tests/test_nillion_client.py b/tests/test_nillion_client.py
+index fae2710..b3c55e1 100644
+--- a/tests/test_nillion_client.py
++++ b/tests/test_nillion_client.py
+@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.asymmetric.ec import (
+     SECP256K1,
+     EllipticCurvePublicKey,
+ )
++from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+ 
+ from nillion_client.errors import PartyError
+ from nillion_client.ids import UserId
+@@ -118,12 +119,128 @@ async def test_store_retrieve_all_value_types(devnet_setup):
+         "array": nillion_client.Array(
+             [nillion_client.Integer(1), nillion_client.Integer(2)]
+         ),
+-        "key": nillion_client.EcdsaPrivateKey(bytearray(os.urandom(32))),
+-        "message": nillion_client.EcdsaDigestMessage(bytearray(os.urandom(32))),
+-        "signature": nillion_client.EcdsaSignature(
++        "ecdsa_key": nillion_client.EcdsaPrivateKey(bytearray(os.urandom(32))),
++        "ecdsa_message": nillion_client.EcdsaDigestMessage(bytearray(os.urandom(32))),
++        "ecdsa_signature": nillion_client.EcdsaSignature(
+             (bytearray([1, 2, 3]), bytearray([1, 2, 3]))
+         ),
+-        "public_key": nillion_client.EcdsaPublicKey(bytearray(os.urandom(33))),
++        "ecdsa_public_key": nillion_client.EcdsaPublicKey(bytearray(os.urandom(33))),
++        "eddsa_key": nillion_client.EddsaPrivateKey(bytearray([1] * 32)),
++        "eddsa_message": nillion_client.EddsaMessage(bytearray(os.urandom(32))),
++        "eddsa_signature": nillion_client.EddsaSignature(
++            (
++                bytearray(
++                    [
++                        228,
++                        118,
++                        63,
++                        53,
++                        138,
++                        161,
++                        20,
++                        164,
++                        93,
++                        86,
++                        233,
++                        11,
++                        211,
++                        204,
++                        186,
++                        63,
++                        255,
++                        174,
++                        220,
++                        173,
++                        222,
++                        58,
++                        64,
++                        79,
++                        108,
++                        173,
++                        130,
++                        1,
++                        134,
++                        44,
++                        244,
++                        104,
++                    ]
++                ),
++                bytearray(
++                    [
++                        137,
++                        73,
++                        233,
++                        168,
++                        34,
++                        64,
++                        148,
++                        185,
++                        177,
++                        91,
++                        184,
++                        21,
++                        246,
++                        82,
++                        65,
++                        207,
++                        83,
++                        158,
++                        44,
++                        181,
++                        199,
++                        94,
++                        83,
++                        178,
++                        88,
++                        238,
++                        210,
++                        220,
++                        10,
++                        49,
++                        154,
++                        1,
++                    ]
++                ),
++            )
++        ),
++        "eddsa_public_key": nillion_client.EddsaPublicKey(
++            bytearray(
++                [
++                    186,
++                    236,
++                    247,
++                    198,
++                    7,
++                    225,
++                    204,
++                    147,
++                    116,
++                    47,
++                    207,
++                    45,
++                    149,
++                    49,
++                    212,
++                    168,
++                    136,
++                    145,
++                    98,
++                    150,
++                    152,
++                    122,
++                    50,
++                    91,
++                    141,
++                    227,
++                    182,
++                    233,
++                    8,
++                    245,
++                    72,
++                    38,
++                ]
++            )
++        ),
+         "store_id": nillion_client.StoreId(bytearray(os.urandom(16))),
+     }
+     # nest all the types above under an array
+@@ -467,6 +584,193 @@ async def test_ecdsa_compute(devnet_setup):
+     client.close()
+ 
+ 
++@pytest.mark.asyncio
++async def test_eddsa_compute(devnet_setup):
++    """Test that we can generate an eddsa private key, store it, and use it to sign a message"""
++
++    client = await new_client(devnet_setup)
++
++    ###########################################
++    #                                         #
++    #          EDDSA CONFIG NAMES             #
++    #                                         #
++    ###########################################
++
++    # program id
++    teddsa_sign_program_id = "builtin/teddsa_sign"
++    teddsa_dks_program_id = "builtin/teddsa_dkg"
++    # input store name
++    teddsa_message_name = "teddsa_message"
++    # output store name
++    teddsa_signature_name = "teddsa_signature"
++    teddsa_public_key_name = "teddsa_public_key"
++    teddsa_store_id_name = "teddsa_store_id"
++    # party names
++    teddsa_key_party = "teddsa_key_party"
++    teddsa_message_party = "teddsa_message_party"
++    teddsa_output_party = "teddsa_output_party"
++    teddsa_private_key_store_id_party = "teddsa_private_key_store_id_party"
++    teddsa_public_key_party = "teddsa_public_key_party"
++
++    ###########################################
++    #                                         #
++    #              EDDSA MESSAGE              #
++    #                                         #
++    ###########################################
++
++    ##### GENERATE MESSAGE
++
++    # The message to sign
++    message = b"A deep message with a deep number: 42."
++
++    teddsa_value = bytearray(message)
++    # eddsa message to be used for signing
++    my_eddsa_message = {
++        teddsa_message_name: nillion_client.EddsaMessage(teddsa_value),
++    }
++
++    ###########################################
++    #                                         #
++    #             EDDSA DKG                   #
++    #                                         #
++    ###########################################
++
++    ##### EDDSA DKG
++    print("\n-----EDDSA DKG")
++
++    # Bind the parties in the computation to the client to set input and output parties
++    input_bindings = []
++    output_bindings = [
++        nillion_client.OutputPartyBinding(
++            teddsa_private_key_store_id_party, [client.user_id]
++        ),
++        nillion_client.OutputPartyBinding(teddsa_public_key_party, [client.user_id]),
++    ]
++
++    # Create a computation time secret to use
++    compute_time_values = {}
++
++    # Compute, passing in the compute time values as well as the previously uploaded value.
++    print(f"Invoking DKG using program {teddsa_dks_program_id}")
++    compute_id = await client.compute(
++        teddsa_dks_program_id,
++        input_bindings,
++        output_bindings,
++        values=compute_time_values,
++        value_ids=[],
++    ).invoke()
++
++    # 6. Return the computation result
++    result = await client.retrieve_compute_results(compute_id).invoke()
++    # Get the store ID and public key from results
++    private_key_store_id = result[teddsa_store_id_name].value
++    teddsa_public_key_value = result[teddsa_public_key_name].value
++    # Ensure private_key_store_id is a bytearray and convert to bytes
++    if isinstance(private_key_store_id, bytearray):  # this is required to pass pyright
++        private_key_store_id_bytes = bytes(private_key_store_id)
++    else:
++        raise TypeError("private_key_store_id must be a bytearray")
++    ecdsa_private_key_store_id = uuid.UUID(bytes=private_key_store_id_bytes)
++    # Ensure tecdsa_public_key_value is a bytearray and convert to bytes
++    if isinstance(
++        teddsa_public_key_value, bytearray
++    ):  # this is required to pass pyright
++        teddsa_public_key = bytes(teddsa_public_key_value)
++    else:
++        raise TypeError("teddsa_public_key must be a bytearray")
++
++    ###########################################
++    #                                         #
++    #             ECDSA SIGNING               #
++    #                                         #
++    ###########################################
++
++    ##### EDDSA SIGNING
++    print("-----EDDSA SIGNING")
++
++    # Bind the parties in the computation to the client to set input and output parties
++    input_bindings = [
++        nillion_client.InputPartyBinding(teddsa_key_party, client.user_id),
++        nillion_client.InputPartyBinding(teddsa_message_party, client.user_id),
++    ]
++    output_bindings = [
++        nillion_client.OutputPartyBinding(teddsa_output_party, [client.user_id])
++    ]
++
++    # Create a computation time secret to use
++    compute_time_values = my_eddsa_message
++
++    # Compute, passing in the compute time values as well as the previously uploaded value.
++    compute_id = await client.compute(
++        teddsa_sign_program_id,
++        input_bindings,
++        output_bindings,
++        values=my_eddsa_message,
++        value_ids=[ecdsa_private_key_store_id],
++    ).invoke()
++    # 6. Return the computation result
++    result = await client.retrieve_compute_results(compute_id).invoke()
++    signature_value = result[teddsa_signature_name]
++    public_key_value = result[teddsa_public_key_name]
++    message_value = result[teddsa_message_name]
++
++    # Ensure the signature is of the correct type
++    if isinstance(signature_value, nillion_client.EddsaSignature):
++        signature_output = signature_value
++    else:
++        raise TypeError("Cannot convert to EddsaSignature.")
++
++    # Ensure the public key is of the correct type
++    if isinstance(public_key_value, nillion_client.EddsaPublicKey):
++        public_key_output = public_key_value
++    else:
++        raise TypeError("Cannot convert to EddsaPublicKey.")
++
++    # Ensure the message is of the correct type
++    if isinstance(message_value, nillion_client.EddsaMessage):
++        message_output = message_value
++    else:
++        raise TypeError("Cannot convert to EddsaMessage.")
++
++    ###########################################
++    #                                         #
++    #           ECDSA VERIFICATION            #
++    #                                         #
++    ###########################################
++
++    ##### OUTPUT VERIFICATION
++    # Verify the public key output from dkg is the same as the one given by signing
++    assert teddsa_public_key == public_key_output.value
++
++    # Verify the message output from signing is the same as input for signing
++    assert message_output.value == message
++
++    ##### EDDSA VERIFICATION
++    print("-----EDDSA VERIFICATION")
++
++    # Transform the result signature to bytes for verification
++    (r, z) = signature_output.value
++    # Convert r and z to bytes - note that EdDSA uses concatenated format (R || Z)
++    r_bytes = bytes(r)
++    z_bytes = bytes(z)
++    # Ed25519 signatures are simply the concatenation of R and Z components
++    signature_bytes = r_bytes + z_bytes
++
++    # Create the public key object from the raw bytes
++    try:
++        ed25519_public_key = Ed25519PublicKey.from_public_bytes(teddsa_public_key)
++    except Exception as e:
++        raise ValueError(f"Invalid Ed25519 public key format: {str(e)}")
++
++    # Verify the signature
++    try:
++        ed25519_public_key.verify(signature_bytes, message)
++    except Exception as e:
++        raise ValueError(f"Signature is invalid: {str(e)}")
++
++    client.close()
++
++
+ @pytest.mark.asyncio
+ async def test_complex_compute(devnet_setup):
+     client_party1 = await new_client(devnet_setup)

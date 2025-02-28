@@ -1,10 +1,11 @@
 use nillion_client_core::{
-    generic_ec::{curves::Secp256k1, serde::CurveName, NonZero, Point, Scalar, SecretScalar},
+    generic_ec::{serde::CurveName, Curve, NonZero, Point, Scalar, SecretScalar},
     key_share::{DirtyCoreKeyShare, DirtyKeyInfo, Validate},
-    privatekey::EcdsaPrivateKeyShare,
-    signature::EcdsaSignatureShare,
+    privatekey::ThresholdPrivateKeyShare,
+    signature::{EcdsaSignatureShare, EddsaSignature},
     values::{BlobPrimitiveType, Encoded, EncodedModularNumber, EncodedModulo, Encrypted, NadaValue},
 };
+
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
@@ -36,6 +37,10 @@ pub enum EncryptedNadaValue {
     EcdsaPrivateKey { i: u16, x: Vec<u8>, shared_public_key: Vec<u8>, public_shares: Vec<Vec<u8>> },
     EcdsaPublicKey { value: Vec<u8> },
     StoreId { value: Vec<u8> },
+    EddsaPrivateKey { i: u16, x: Vec<u8>, shared_public_key: Vec<u8>, public_shares: Vec<Vec<u8>> },
+    EddsaPublicKey { value: Vec<u8> },
+    EddsaSignature { value: Vec<u8> },
+    EddsaMessage { value: Vec<u8> },
 }
 
 impl EncryptedNadaValue {
@@ -76,6 +81,22 @@ impl EncryptedNadaValue {
                 }
             }
             NadaValue::StoreId(value) => Self::StoreId { value: value.to_vec() },
+            NadaValue::EddsaPrivateKey(key) => {
+                let key = key.into_inner();
+                Self::EddsaPrivateKey {
+                    i: key.i,
+                    x: key.x.clone().into_inner().as_ref().to_le_bytes().to_vec(),
+                    shared_public_key: key.key_info.shared_public_key.to_bytes(true).to_vec(),
+                    public_shares: key.key_info.public_shares.iter().map(|s| s.to_bytes(true).to_vec()).collect(),
+                }
+            }
+            NadaValue::EddsaPublicKey(value) => Self::EddsaPublicKey { value: value.to_vec() },
+            NadaValue::EddsaSignature(signature) => {
+                let mut out = vec![0u8; signature.serialized_len()];
+                signature.signature.write_to_slice(&mut out);
+                Self::EddsaSignature { value: out }
+            }
+            NadaValue::EddsaMessage(message) => Self::EddsaMessage { value: message },
             _ => Err(PyValueError::new_err("Unsupported NadaValue variant for conversion to PyObject"))?,
         };
         Ok(value)
@@ -153,8 +174,38 @@ impl EncryptedNadaValue {
                 }
                 .validate()
                 .map_err(|e| PyValueError::new_err(e.to_string()))?;
-                NadaValue::new_ecdsa_private_key(EcdsaPrivateKeyShare::new(share))
+                NadaValue::new_ecdsa_private_key(ThresholdPrivateKeyShare::new(share))
             }
+            E::EddsaPrivateKey { i, x, shared_public_key, public_shares } => {
+                let share = DirtyCoreKeyShare {
+                    i,
+                    key_info: DirtyKeyInfo {
+                        curve: CurveName::new(),
+                        shared_public_key: non_zero_point_from_bytes(&shared_public_key)?,
+                        public_shares: public_shares
+                            .iter()
+                            .map(|s| non_zero_point_from_bytes(s))
+                            .collect::<Result<_, _>>()?,
+                        vss_setup: None,
+                    },
+                    x: non_zero_secret_scalar_from_bytes(&x)?,
+                }
+                .validate()
+                .map_err(|e| PyValueError::new_err(e.to_string()))?;
+                NadaValue::new_eddsa_private_key(ThresholdPrivateKeyShare::new(share))
+            }
+            E::EddsaPublicKey { value } => {
+                let value: [u8; 32] =
+                    value.try_into().map_err(|_| PyValueError::new_err("invalid public key length"))?;
+                NadaValue::new_eddsa_public_key(value)
+            }
+            E::EddsaSignature { value } => {
+                let signature = EddsaSignature::from_bytes(&value)
+                    .map_err(|_| PyValueError::new_err("Failed to deserialize EdDSA signature"))?;
+
+                NadaValue::new_eddsa_signature(signature)
+            }
+            E::EddsaMessage { value } => NadaValue::new_eddsa_message(value),
         };
         Ok(value)
     }
@@ -180,16 +231,20 @@ impl EncryptedNadaValue {
             Self::EcdsaPrivateKey { .. } => "EcdsaPrivateKey {..}".into(),
             Self::EcdsaPublicKey { .. } => "EcdsaPublicKey {..}".into(),
             Self::StoreId { .. } => "StoreId {..}".into(),
+            Self::EddsaPrivateKey { .. } => "EddsaPrivateKey {..}".into(),
+            Self::EddsaPublicKey { .. } => "EddsaPublicKey {..}".into(),
+            Self::EddsaSignature { .. } => "EddsaSignature {..}".into(),
+            Self::EddsaMessage { .. } => "EddsaMessage {..}".into(),
         }
     }
 }
 
-fn non_zero_point_from_bytes(bytes: &[u8]) -> PyResult<NonZero<Point<Secp256k1>>> {
+fn non_zero_point_from_bytes<C: Curve>(bytes: &[u8]) -> PyResult<NonZero<Point<C>>> {
     let point = Point::from_bytes(bytes).map_err(|_| PyValueError::new_err("invalid bytes"))?;
     NonZero::from_point(point).ok_or_else(|| PyValueError::new_err("point is zero"))
 }
 
-fn non_zero_secret_scalar_from_bytes(bytes: &[u8]) -> PyResult<NonZero<SecretScalar<Secp256k1>>> {
+fn non_zero_secret_scalar_from_bytes<C: Curve>(bytes: &[u8]) -> PyResult<NonZero<SecretScalar<C>>> {
     let scalar = SecretScalar::from_le_bytes(bytes).map_err(|_| PyValueError::new_err("invalid bytes"))?;
     NonZero::from_secret_scalar(scalar).ok_or_else(|| PyValueError::new_err("scalar is zero"))
 }
@@ -211,6 +266,10 @@ pub enum EncryptedNadaType {
     EcdsaPrivateKey(),
     EcdsaPublicKey(),
     StoreId(),
+    EddsaPrivateKey(),
+    EddsaPublicKey(),
+    EddsaSignature(),
+    EddsaMessage(),
 }
 
 impl EncryptedNadaType {
@@ -236,6 +295,10 @@ impl EncryptedNadaType {
             T::EcdsaSignature => Self::EcdsaSignature(),
             T::EcdsaPublicKey => Self::EcdsaPublicKey(),
             T::StoreId => Self::StoreId(),
+            T::EddsaPrivateKey => Self::EddsaPrivateKey(),
+            T::EddsaPublicKey => Self::EddsaPublicKey(),
+            T::EddsaSignature => Self::EddsaSignature(),
+            T::EddsaMessage => Self::EddsaMessage(),
             T::SecretInteger | T::SecretUnsignedInteger | T::SecretBoolean | T::NTuple { .. } | T::Object { .. } => {
                 return Err(PyValueError::new_err(format!("unsupported type: {t}",)));
             }
@@ -270,6 +333,10 @@ impl EncryptedNadaType {
             EncryptedNadaType::EcdsaPrivateKey() => T::EcdsaPrivateKey,
             EncryptedNadaType::EcdsaPublicKey() => T::EcdsaPublicKey,
             EncryptedNadaType::StoreId() => T::StoreId,
+            EncryptedNadaType::EddsaPrivateKey() => T::EddsaPrivateKey,
+            EncryptedNadaType::EddsaPublicKey() => T::EddsaPublicKey,
+            EncryptedNadaType::EddsaSignature() => T::EddsaSignature,
+            EncryptedNadaType::EddsaMessage() => T::EddsaMessage,
         };
         Ok(output)
     }
@@ -293,6 +360,10 @@ impl EncryptedNadaType {
             Self::EcdsaPrivateKey { .. } => "EcdsaPrivateKey {..}".into(),
             Self::EcdsaPublicKey { .. } => "EcdsaPublicKey {..}".into(),
             Self::StoreId { .. } => "StoreId {..}".into(),
+            Self::EddsaPrivateKey { .. } => "EddsaPrivateKey {..}".into(),
+            Self::EddsaPublicKey { .. } => "EddsaPublicKey {..}".into(),
+            Self::EddsaSignature { .. } => "EddsaSignature {..}".into(),
+            Self::EddsaMessage { .. } => "EddsaMessage {..}".into(),
         }
     }
 }

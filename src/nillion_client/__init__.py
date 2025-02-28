@@ -23,6 +23,10 @@ from nillion_client_core import (
     EcdsaSignature,
     EcdsaPublicKey,
     StoreId,
+    EddsaPrivateKey,
+    EddsaPublicKey,
+    EddsaSignature,
+    EddsaMessage,
 )
 from nillion_client_proto.nillion.preprocessing.v1.element import PreprocessingElement
 from cosmpy.crypto.keypairs import PrivateKey as NilChainPrivateKey
@@ -57,6 +61,10 @@ __all__ = [
     "EcdsaSignature",
     "EcdsaPublicKey",
     "StoreId",
+    "EddsaPrivateKey",
+    "EddsaPublicKey",
+    "EddsaSignature",
+    "EddsaMessage",
     "PreprocessingElement",
     "PrivateKey",
     "NilChainPrivateKey",

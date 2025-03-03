@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.asymmetric.ec import (
     SECP256K1,
     EllipticCurvePublicKey,
 )
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from nillion_client.errors import PartyError
 from nillion_client.ids import UserId
@@ -118,12 +119,128 @@ async def test_store_retrieve_all_value_types(devnet_setup):
         "array": nillion_client.Array(
             [nillion_client.Integer(1), nillion_client.Integer(2)]
         ),
-        "key": nillion_client.EcdsaPrivateKey(bytearray(os.urandom(32))),
-        "message": nillion_client.EcdsaDigestMessage(bytearray(os.urandom(32))),
-        "signature": nillion_client.EcdsaSignature(
+        "ecdsa_key": nillion_client.EcdsaPrivateKey(bytearray(os.urandom(32))),
+        "ecdsa_message": nillion_client.EcdsaDigestMessage(bytearray(os.urandom(32))),
+        "ecdsa_signature": nillion_client.EcdsaSignature(
             (bytearray([1, 2, 3]), bytearray([1, 2, 3]))
         ),
-        "public_key": nillion_client.EcdsaPublicKey(bytearray(os.urandom(33))),
+        "ecdsa_public_key": nillion_client.EcdsaPublicKey(bytearray(os.urandom(33))),
+        "eddsa_key": nillion_client.EddsaPrivateKey(bytearray([1] * 32)),
+        "eddsa_message": nillion_client.EddsaMessage(bytearray(os.urandom(32))),
+        "eddsa_signature": nillion_client.EddsaSignature(
+            (
+                bytearray(
+                    [
+                        228,
+                        118,
+                        63,
+                        53,
+                        138,
+                        161,
+                        20,
+                        164,
+                        93,
+                        86,
+                        233,
+                        11,
+                        211,
+                        204,
+                        186,
+                        63,
+                        255,
+                        174,
+                        220,
+                        173,
+                        222,
+                        58,
+                        64,
+                        79,
+                        108,
+                        173,
+                        130,
+                        1,
+                        134,
+                        44,
+                        244,
+                        104,
+                    ]
+                ),
+                bytearray(
+                    [
+                        137,
+                        73,
+                        233,
+                        168,
+                        34,
+                        64,
+                        148,
+                        185,
+                        177,
+                        91,
+                        184,
+                        21,
+                        246,
+                        82,
+                        65,
+                        207,
+                        83,
+                        158,
+                        44,
+                        181,
+                        199,
+                        94,
+                        83,
+                        178,
+                        88,
+                        238,
+                        210,
+                        220,
+                        10,
+                        49,
+                        154,
+                        1,
+                    ]
+                ),
+            )
+        ),
+        "eddsa_public_key": nillion_client.EddsaPublicKey(
+            bytearray(
+                [
+                    186,
+                    236,
+                    247,
+                    198,
+                    7,
+                    225,
+                    204,
+                    147,
+                    116,
+                    47,
+                    207,
+                    45,
+                    149,
+                    49,
+                    212,
+                    168,
+                    136,
+                    145,
+                    98,
+                    150,
+                    152,
+                    122,
+                    50,
+                    91,
+                    141,
+                    227,
+                    182,
+                    233,
+                    8,
+                    245,
+                    72,
+                    38,
+                ]
+            )
+        ),
         "store_id": nillion_client.StoreId(bytearray(os.urandom(16))),
     }
     # nest all the types above under an array
@@ -461,6 +578,193 @@ async def test_ecdsa_compute(devnet_setup):
     # Verify the signature
     try:
         ecdsa_public_key.verify(signature_bytes, message, ec.ECDSA(hashes.SHA256()))
+    except Exception as e:
+        raise ValueError(f"Signature is invalid: {str(e)}")
+
+    client.close()
+
+
+@pytest.mark.asyncio
+async def test_eddsa_compute(devnet_setup):
+    """Test that we can generate an eddsa private key, store it, and use it to sign a message"""
+
+    client = await new_client(devnet_setup)
+
+    ###########################################
+    #                                         #
+    #          EDDSA CONFIG NAMES             #
+    #                                         #
+    ###########################################
+
+    # program id
+    teddsa_sign_program_id = "builtin/teddsa_sign"
+    teddsa_dks_program_id = "builtin/teddsa_dkg"
+    # input store name
+    teddsa_message_name = "teddsa_message"
+    # output store name
+    teddsa_signature_name = "teddsa_signature"
+    teddsa_public_key_name = "teddsa_public_key"
+    teddsa_store_id_name = "teddsa_store_id"
+    # party names
+    teddsa_key_party = "teddsa_key_party"
+    teddsa_message_party = "teddsa_message_party"
+    teddsa_output_party = "teddsa_output_party"
+    teddsa_private_key_store_id_party = "teddsa_private_key_store_id_party"
+    teddsa_public_key_party = "teddsa_public_key_party"
+
+    ###########################################
+    #                                         #
+    #              EDDSA MESSAGE              #
+    #                                         #
+    ###########################################
+
+    ##### GENERATE MESSAGE
+
+    # The message to sign
+    message = b"A deep message with a deep number: 42."
+
+    teddsa_value = bytearray(message)
+    # eddsa message to be used for signing
+    my_eddsa_message = {
+        teddsa_message_name: nillion_client.EddsaMessage(teddsa_value),
+    }
+
+    ###########################################
+    #                                         #
+    #             EDDSA DKG                   #
+    #                                         #
+    ###########################################
+
+    ##### EDDSA DKG
+    print("\n-----EDDSA DKG")
+
+    # Bind the parties in the computation to the client to set input and output parties
+    input_bindings = []
+    output_bindings = [
+        nillion_client.OutputPartyBinding(
+            teddsa_private_key_store_id_party, [client.user_id]
+        ),
+        nillion_client.OutputPartyBinding(teddsa_public_key_party, [client.user_id]),
+    ]
+
+    # Create a computation time secret to use
+    compute_time_values = {}
+
+    # Compute, passing in the compute time values as well as the previously uploaded value.
+    print(f"Invoking DKG using program {teddsa_dks_program_id}")
+    compute_id = await client.compute(
+        teddsa_dks_program_id,
+        input_bindings,
+        output_bindings,
+        values=compute_time_values,
+        value_ids=[],
+    ).invoke()
+
+    # 6. Return the computation result
+    result = await client.retrieve_compute_results(compute_id).invoke()
+    # Get the store ID and public key from results
+    private_key_store_id = result[teddsa_store_id_name].value
+    teddsa_public_key_value = result[teddsa_public_key_name].value
+    # Ensure private_key_store_id is a bytearray and convert to bytes
+    if isinstance(private_key_store_id, bytearray):  # this is required to pass pyright
+        private_key_store_id_bytes = bytes(private_key_store_id)
+    else:
+        raise TypeError("private_key_store_id must be a bytearray")
+    ecdsa_private_key_store_id = uuid.UUID(bytes=private_key_store_id_bytes)
+    # Ensure tecdsa_public_key_value is a bytearray and convert to bytes
+    if isinstance(
+        teddsa_public_key_value, bytearray
+    ):  # this is required to pass pyright
+        teddsa_public_key = bytes(teddsa_public_key_value)
+    else:
+        raise TypeError("teddsa_public_key must be a bytearray")
+
+    ###########################################
+    #                                         #
+    #             ECDSA SIGNING               #
+    #                                         #
+    ###########################################
+
+    ##### EDDSA SIGNING
+    print("-----EDDSA SIGNING")
+
+    # Bind the parties in the computation to the client to set input and output parties
+    input_bindings = [
+        nillion_client.InputPartyBinding(teddsa_key_party, client.user_id),
+        nillion_client.InputPartyBinding(teddsa_message_party, client.user_id),
+    ]
+    output_bindings = [
+        nillion_client.OutputPartyBinding(teddsa_output_party, [client.user_id])
+    ]
+
+    # Create a computation time secret to use
+    compute_time_values = my_eddsa_message
+
+    # Compute, passing in the compute time values as well as the previously uploaded value.
+    compute_id = await client.compute(
+        teddsa_sign_program_id,
+        input_bindings,
+        output_bindings,
+        values=my_eddsa_message,
+        value_ids=[ecdsa_private_key_store_id],
+    ).invoke()
+    # 6. Return the computation result
+    result = await client.retrieve_compute_results(compute_id).invoke()
+    signature_value = result[teddsa_signature_name]
+    public_key_value = result[teddsa_public_key_name]
+    message_value = result[teddsa_message_name]
+
+    # Ensure the signature is of the correct type
+    if isinstance(signature_value, nillion_client.EddsaSignature):
+        signature_output = signature_value
+    else:
+        raise TypeError("Cannot convert to EddsaSignature.")
+
+    # Ensure the public key is of the correct type
+    if isinstance(public_key_value, nillion_client.EddsaPublicKey):
+        public_key_output = public_key_value
+    else:
+        raise TypeError("Cannot convert to EddsaPublicKey.")
+
+    # Ensure the message is of the correct type
+    if isinstance(message_value, nillion_client.EddsaMessage):
+        message_output = message_value
+    else:
+        raise TypeError("Cannot convert to EddsaMessage.")
+
+    ###########################################
+    #                                         #
+    #           ECDSA VERIFICATION            #
+    #                                         #
+    ###########################################
+
+    ##### OUTPUT VERIFICATION
+    # Verify the public key output from dkg is the same as the one given by signing
+    assert teddsa_public_key == public_key_output.value
+
+    # Verify the message output from signing is the same as input for signing
+    assert message_output.value == message
+
+    ##### EDDSA VERIFICATION
+    print("-----EDDSA VERIFICATION")
+
+    # Transform the result signature to bytes for verification
+    (r, z) = signature_output.value
+    # Convert r and z to bytes - note that EdDSA uses concatenated format (R || Z)
+    r_bytes = bytes(r)
+    z_bytes = bytes(z)
+    # Ed25519 signatures are simply the concatenation of R and Z components
+    signature_bytes = r_bytes + z_bytes
+
+    # Create the public key object from the raw bytes
+    try:
+        ed25519_public_key = Ed25519PublicKey.from_public_bytes(teddsa_public_key)
+    except Exception as e:
+        raise ValueError(f"Invalid Ed25519 public key format: {str(e)}")
+
+    # Verify the signature
+    try:
+        ed25519_public_key.verify(signature_bytes, message)
     except Exception as e:
         raise ValueError(f"Signature is invalid: {str(e)}")
 

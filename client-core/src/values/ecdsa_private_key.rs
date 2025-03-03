@@ -62,7 +62,7 @@ impl EcdsaPrivateKey {
     /// Returns a new EcdsaPrivateKey. The byte array should be in big-endian format.
     #[new]
     fn new(value: &Bound<'_, PyByteArray>) -> PyResult<EcdsaPrivateKey> {
-        let ecdsa_private_key = privatekey::EcdsaPrivateKey::from_bytes(&value.to_vec()).map_err(|_| {
+        let ecdsa_private_key = privatekey::ThresholdPrivateKey::from_be_bytes(&value.to_vec()).map_err(|_| {
             PyValueError::new_err(
                 "Private key format error. Check your ecdsa secret key is exactly 32 bytes and different from 0.",
             )
@@ -101,7 +101,7 @@ impl EcdsaPrivateKey {
             .as_ecdsa_private_key()
             .ok_or_else(|| PyValueError::new_err("expected ecdsa private key"))?
             .clone()
-            .to_bytes();
+            .to_be_bytes();
         Ok(PyByteArray::new_bound(py, &bytes).into())
     }
 

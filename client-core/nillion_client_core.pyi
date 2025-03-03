@@ -14,6 +14,10 @@ NadaValue = Union[
     EcdsaSignature,
     EcdsaPublicKey,
     StoreId,
+    EddsaPrivateKey,
+    EddsaPublicKey,
+    EddsaSignature,
+    EddsaMessage,
 ]
 
 class SecretUnsignedInteger:
@@ -139,6 +143,42 @@ class StoreId:
     def __eq__(self, other: object) -> bool: ...
     def __repr__(self) -> str: ...
 
+class EddsaPrivateKey:
+    """Encodes a secret as an eddsa private key."""
+
+    value: bytearray
+
+    def __init__(self, value: bytearray) -> None: ...
+    def __eq__(self, other: object) -> bool: ...
+    def __repr__(self) -> str: ...
+
+class EddsaPublicKey:
+    """Encodes an eddsa public key."""
+
+    value: bytearray
+
+    def __init__(self, value: bytearray) -> None: ...
+    def __eq__(self, other: object) -> bool: ...
+    def __repr__(self) -> str: ...
+
+class EddsaSignature:
+    """Encodes an eddsa signature."""
+
+    value: Tuple[bytearray, bytearray]
+
+    def __init__(self, value: Tuple[bytearray, bytearray]) -> None: ...
+    def __eq__(self, other: object) -> bool: ...
+    def __repr__(self) -> str: ...
+
+class EddsaMessage:
+    """Encodes an eddsa message."""
+
+    value: bytearray
+
+    def __init__(self, value: bytearray) -> None: ...
+    def __eq__(self, other: object) -> bool: ...
+    def __repr__(self) -> str: ...
+
 class ProgramRequirements:
     """A program preprocessing requirements"""
 
@@ -204,6 +244,9 @@ class NadaValuesClassification:
 
     ecdsa_private_key_shares: int
     """The number of ecdsa private key shares."""
+
+    ecdsa_signature_shares: int
+    """The number of ecdsa signature shares."""
 
 class SecretMasker:
     """A secret masker. This allows masking and unmasking secrets."""

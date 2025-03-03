@@ -8,6 +8,24 @@ from dataclasses import dataclass
 import betterproto
 
 
+class ComputeType(betterproto.Enum):
+    """
+    The type of compute performed. We currently support three types:
+     - GENERAL: A general compute that computes some Nada program.
+     - ECDSA_DKG: A specific compute operation for ECDSA distributed key generation.
+     - EDDSA_DKG: A specific compute operation for Eddsa distributed key generation.
+    """
+
+    GENERAL = 0
+    """A general compute."""
+
+    ECDSA_DKG = 1
+    """An ECDSA distributed key generation protocol."""
+
+    EDDSA_DKG = 2
+    """An Eddsa distributed key generation protocol."""
+
+
 @dataclass(eq=False, repr=False)
 class ComputeStreamMessage(betterproto.Message):
     """A message for a compute stream."""
@@ -22,3 +40,6 @@ class ComputeStreamMessage(betterproto.Message):
 
     bincode_message: bytes = betterproto.bytes_field(2)
     """The VM message in bincode format."""
+
+    compute_type: "ComputeType" = betterproto.enum_field(3)
+    """The type of compute."""

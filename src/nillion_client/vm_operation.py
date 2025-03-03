@@ -20,6 +20,10 @@ from nillion_client_core import (
     EcdsaDigestMessage,
     EcdsaSignature,
     EcdsaPublicKey,
+    EddsaPrivateKey,
+    EddsaSignature,
+    EddsaPublicKey,
+    EddsaMessage,
     StoreId,
 )
 
@@ -55,6 +59,10 @@ NadaValue = Union[
     EcdsaDigestMessage,
     EcdsaSignature,
     EcdsaPublicKey,
+    EddsaPrivateKey,
+    EddsaSignature,
+    EddsaPublicKey,
+    EddsaMessage,
     StoreId,
 ]
 

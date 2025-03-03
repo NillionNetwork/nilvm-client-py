@@ -16,3 +16,6 @@ class PaymentsConfigResponse(betterproto.Message):
     """
     The minimum amount of unil that can be added in a `Payments.add_funds` request.
     """
+
+    credits_per_nil: int = betterproto.uint64_field(2)
+    """The number of credits one gets for every nil funded to an account."""

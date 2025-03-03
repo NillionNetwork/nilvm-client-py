@@ -118,6 +118,9 @@ struct NadaValuesClassification {
 
     /// The number of ecdsa key shares
     ecdsa_private_key_shares: u64,
+
+    /// The number of ecdsa signatures shares
+    ecdsa_signature_shares: u64,
 }
 
 #[pymethods]
@@ -132,7 +135,12 @@ impl NadaValuesClassification {
 
 impl From<::nillion_client_core::values::NadaValuesClassification> for NadaValuesClassification {
     fn from(value: ::nillion_client_core::values::NadaValuesClassification) -> Self {
-        Self { shares: value.shares, public: value.public, ecdsa_private_key_shares: value.ecdsa_private_key_shares }
+        Self {
+            shares: value.shares,
+            public: value.public,
+            ecdsa_private_key_shares: value.ecdsa_private_key_shares,
+            ecdsa_signature_shares: value.ecdsa_signature_shares,
+        }
     }
 }
 

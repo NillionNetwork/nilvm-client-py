@@ -22,7 +22,7 @@ jobs:
           aws-region: "eu-west-1"
       - name: Start EC2 runner
         id: start-ec2-runner
-        uses: NillionNetwork/ec2-github-runner@v2.2
+        uses: NillionNetwork/ec2-github-runner@v2.4.0
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN_RUNNER }}
@@ -212,7 +212,7 @@ jobs:
           aws-region: "eu-west-1"
 
       - name: Stop EC2 runner
-        uses: NillionNetwork/ec2-github-runner@v2.2
+        uses: NillionNetwork/ec2-github-runner@v2.4.0
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN_RUNNER }}

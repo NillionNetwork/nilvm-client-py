@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nillion-client"
-version = "0.2.1rc1"
+version = "0.2.1rc2"
 requires-python = ">=3.10"
 description = "Nillion client"
 license = { text = "MIT" }
@@ -19,8 +19,8 @@ dependencies = [
     "secp256k1==0.14.0",
     "base58==2.1.1",
     "tenacity==9.0.0",
-    "nillion-client-core==0.2.1rc1",
-    "nillion-client-proto==0.2.1rc1",
+    "nillion-client-core==0.2.1rc2",
+    "nillion-client-proto==0.2.1rc2",
     "pyyaml==6.0.2"
 ]
 

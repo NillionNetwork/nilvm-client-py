@@ -6,6 +6,10 @@ use self::{
     ecdsa_private_key::EcdsaPrivateKey,
     ecdsa_public_key::EcdsaPublicKey,
     ecdsa_signature::EcdsaSignature,
+    eddsa_message::EddsaMessage,
+    eddsa_private_key::EddsaPrivateKey,
+    eddsa_public_key::EddsaPublicKey,
+    eddsa_signature::EddsaSignature,
     integer::{Integer, SecretInteger},
     store_id::StoreId,
     unsigned_integer::{SecretUnsignedInteger, UnsignedInteger},
@@ -21,6 +25,10 @@ pub mod ecdsa_digest_message;
 pub mod ecdsa_private_key;
 pub mod ecdsa_public_key;
 pub mod ecdsa_signature;
+pub mod eddsa_message;
+pub mod eddsa_private_key;
+pub mod eddsa_public_key;
+pub mod eddsa_signature;
 pub mod integer;
 pub mod store_id;
 pub mod unsigned_integer;
@@ -46,6 +54,10 @@ pub(crate) fn nada_value_clear_to_pyobject(py: Python<'_>, value: NadaValue<Clea
         NadaValue::Array { values, inner_type } => {
             Array::try_from(NadaValue::Array { values, inner_type })?.into_py(py)
         }
+        NadaValue::EddsaPrivateKey(value) => EddsaPrivateKey::try_from(NadaValue::EddsaPrivateKey(value))?.into_py(py),
+        NadaValue::EddsaPublicKey(value) => EddsaPublicKey::try_from(NadaValue::EddsaPublicKey(value))?.into_py(py),
+        NadaValue::EddsaSignature(value) => EddsaSignature::try_from(NadaValue::EddsaSignature(value))?.into_py(py),
+        NadaValue::EddsaMessage(value) => EddsaMessage::try_from(NadaValue::EddsaMessage(value))?.into_py(py),
         NadaValue::Tuple { .. }
         | NadaValue::NTuple { .. }
         | NadaValue::Object { .. }
@@ -84,6 +96,14 @@ fn pyany_to_nada_value_clear(value: Bound<PyAny>) -> Result<NadaValue<Clear>, Py
     } else if let Ok(value) = value.extract::<StoreId>() {
         value.inner
     } else if let Ok(value) = value.extract::<Array>() {
+        value.inner
+    } else if let Ok(value) = value.extract::<EddsaPrivateKey>() {
+        value.inner
+    } else if let Ok(value) = value.extract::<EddsaPublicKey>() {
+        value.inner
+    } else if let Ok(value) = value.extract::<EddsaSignature>() {
+        value.inner
+    } else if let Ok(value) = value.extract::<EddsaMessage>() {
         value.inner
     } else {
         Err(PyValueError::new_err("Unsupported NadaValue variant for conversion to PyObject"))?
@@ -127,5 +147,9 @@ pub fn add_module(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<EcdsaPublicKey>()?;
     m.add_class::<EcdsaSignature>()?;
     m.add_class::<StoreId>()?;
+    m.add_class::<EddsaPrivateKey>()?;
+    m.add_class::<EddsaPublicKey>()?;
+    m.add_class::<EddsaSignature>()?;
+    m.add_class::<EddsaMessage>()?;
     Ok(())
 }

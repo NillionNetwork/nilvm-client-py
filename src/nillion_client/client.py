@@ -1415,7 +1415,9 @@ class VmClient:
             )
         nonce = secrets.token_bytes(32)
         payload = AddFundsPayload(
-            recipient=(target_user or self.user_id).to_proto(), nonce=nonce
+            recipient=(target_user or self.user_id).to_proto(),
+            nonce=nonce,
+            leader_public_key=self.cluster.leader.public_key,
         ).SerializeToString()
         payload_hash = hashlib.sha256(payload).digest()
         tx_hash = await self._payer.submit_payment(amount_unil, payload_hash)

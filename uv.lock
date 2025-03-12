@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.10"
 
 [manifest]
@@ -1198,7 +1199,7 @@ wheels = [
 
 [[package]]
 name = "nillion-client"
-version = "0.2.1rc1"
+version = "0.2.1rc2"
 source = { editable = "." }
 dependencies = [
     { name = "base58" },
@@ -1271,7 +1272,7 @@ dev = [
 
 [[package]]
 name = "nillion-client-core"
-version = "0.2.1rc1"
+version = "0.2.1rc2"
 source = { editable = "client-core" }
 
 [package.optional-dependencies]
@@ -1285,10 +1286,11 @@ requires-dist = [
     { name = "maturin", extras = ["zig"], marker = "extra == 'dev'", specifier = "==1.7.4" },
     { name = "pip", marker = "extra == 'dev'", specifier = "==24.2" },
 ]
+provides-extras = ["dev"]
 
 [[package]]
 name = "nillion-client-proto"
-version = "0.2.1rc1"
+version = "0.2.1rc2"
 source = { editable = "client-proto" }
 dependencies = [
     { name = "betterproto" },
@@ -1308,6 +1310,7 @@ requires-dist = [
     { name = "googleapis-common-protos", specifier = "==1.66.0" },
     { name = "grpcio-tools", marker = "extra == 'dev'", specifier = "==1.62.3" },
 ]
+provides-extras = ["dev"]
 
 [[package]]
 name = "nodeenv"

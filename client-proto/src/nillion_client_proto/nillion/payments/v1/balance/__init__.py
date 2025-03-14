@@ -8,7 +8,10 @@ from datetime import datetime
 
 import betterproto
 
-from ....auth.v1 import user as ___auth_v1_user__
+from ....auth.v1 import (
+    public_key as ___auth_v1_public_key__,
+    user as ___auth_v1_user__,
+)
 
 
 @dataclass(eq=False, repr=False)
@@ -47,3 +50,8 @@ class AddFundsPayload(betterproto.Message):
     """
     A 32 byte nonce that is used to add entropy to the hash of this message and to prevent duplicate spending.
     """
+
+    leader_public_key: "___auth_v1_public_key__.PublicKey" = betterproto.message_field(
+        3
+    )
+    """The public key of the leader node that funds are being sent to."""
